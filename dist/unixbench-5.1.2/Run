@@ -105,7 +105,7 @@ my $TESTDIR = getDir('UB_TESTDIR', $BASEDIR . "/testdir");
 
 # Configure the categories to which tests can belong.
 my $testCats = {
-    'system'    => { 'name' => "System Benchmarks", 'maxCopies' => 16 },
+    'system'    => { 'name' => "System Benchmarks", 'maxCopies' => 32 },
     '2d'        => { 'name' => "2D Graphics Benchmarks", 'maxCopies' => 1 },
     '3d'        => { 'name' => "3D Graphics Benchmarks", 'maxCopies' => 1 },
     'misc'      => { 'name' => "Non-Index Benchmarks", 'maxCopies' => 16 },
