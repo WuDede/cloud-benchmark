@@ -6,8 +6,8 @@ source frame_src/init.func
 
 main()
 {
-    #rm -rf $TEST_PKG
-    #tar zcf $TEST_PKG dist || return 1
+    rm -rf $TEST_PKG
+    tar zcf $TEST_PKG dist || return 1
     setup_tmux_run "$@" || return 1
 }
 
