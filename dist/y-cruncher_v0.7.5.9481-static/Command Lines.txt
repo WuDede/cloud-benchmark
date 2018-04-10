@@ -1,0 +1,312 @@
+y-cruncher Command-Line Manual
+
+--------------------------------------------------------------------------------
+
+General Usage:
+
+    y-cruncher [option] [extra parameters]
+
+
+
+Examples:
+
+
+Run a Pi benchmark 500 million digits:
+
+    y-cruncher bench 500m
+
+
+Compute log(2) to 100 billion digits using 60GB ram and 4 drives in raid 0:
+
+    y-cruncher custom log:2 -dec:100b -mode:swap -M:60g -swap:raid0 g:/ h:/ i:/ j:/
+
+
+Run a configuration file:
+
+    y-cruncher config config-name.ini
+    y-cruncher config "my saved settings"
+
+
+
+--------------------------------------------------------------------------------
+
+Common Parameters:
+
+These parameters are used by multiple components in y-cruncher.
+
+
+Task Decomposition:
+
+    -TD:{tasks}
+    (Examples: "-TD:8", "-TD:12")
+
+    Run the operation using the desired level of task decomposition.
+    A larger number enables more parallelism, but at the cost of more
+    computational and memory overhead. For most systems, setting this equal to
+    the number of logical cores is ideal. But forcing it higher may reduce
+    load-imbalance.
+
+    Note that setting this value to 1 does not disable multi-threading since
+    some subroutines ignore the parameter and will decompose anyway. To get a
+    correct single-threaded benchmark, you need to also set the parallel
+    framework to "none".
+
+    Disable Multi-threading: -TD:1 -PF:none
+
+
+Parallel Framework:
+
+    -PF:{framework}
+    (Examples: "-PF:none", "-PF:cppasync")
+
+    Use the specified parallel computing framework. The valid values are:
+        -PF:none        Disable multi-threading and sequentialize all tasks.
+        -PF:spawn       Spawn a thread for every task.
+        -PF:cppasync    Use C++11 Async.
+        -PF:pushpool    Use y-cruncher's custom decentralized thread pool.
+        -PF:winpool     Use the Windows Thread Pool.      (only available on Windows)
+        -PF:cilk        Use Cilk Plus work-stealing.      (not available everywhere)
+        -PF:tbb         Use Thread Building Blocks (TBB). (not available everywhere)
+
+    Note that there is no way to set framework-specific settings via the
+    command line. So they will be left at their default values. You can only
+    set them from within y-cruncher's console UI or with config files.
+
+
+Memory:
+
+    -M:{memory bytes}
+    (Examples: "-M:100000000", "-M:4.7g")
+
+    Run the operation using the specified amount of memory.
+    Decimals and suffixes are accepted: 4.7g, 9.1t
+    Suffixes are not case sensitive.
+
+
+Memory Allocator:
+
+    -MA:{allocator}
+    (Examples: "-MA:mmap", "-MA:interleave")
+
+    Use the specified parallel computing framework. The valid values are:
+        -MA:malloc              Use the C malloc() allocator.
+        -MA:mmap                Use memory mapping. ("VirtualAlloc()" on Windows, "mmap()" on Linux)
+        -MA:interleave          Interleave NUMA nodes.
+        -MA:interleave-libnuma  Interleave NUMA nodes using the libnuma library.
+                                (only available with the dynamically-linked Linux binaries)
+
+    Note that there is currently no way to set allocator-specific settings via
+    the command line. So they will be left at their default values. You can
+    only set them from within y-cruncher's console UI or with config files.
+
+
+Min I/O Bytes (Bytes per Seek):
+
+    -minIO:{Min I/O Size}
+    (Examples: "-minIO:1048576", "-minIO:4m")
+
+    Run the operation using the specified amount Min I/O parameter.
+    Decimals and suffixes are accepted: 512k, 1.5m
+    Suffixes are not case sensitive.
+
+    Note: The behavior of this option has changed from v0.7.2 to v0.7.3.
+
+    In v0.7.2 and earlier, this option set the "physical Min I/O" which is then
+    automatically adjusted based on the swap mode configuration to compute the
+    "logical Min I/O".
+
+    In v0.7.3, the concept of "physical Min I/O" has been removed. This option
+    will now set the "logical Min I/O" instead. It will not be automatically
+    adjusted as it was before.
+
+
+Swap Mode Configuration:
+
+    -swap:default
+    -swap:raid0 [path0] [path1] [path2] [etc...]
+    -swap:raid3 [path0] [path1] [path2] [etc...]
+
+    -swap:default
+    -swap:raid0 c:/ d:/ e:/ f:/
+    -swap:raid3 c:/ d:/ e:/ f:/ "path with space"
+
+    If this option is used, it must be the last option. All arguments after it
+    will be parsed as paths. There is no support for the full custom configure
+    that is possible from the console UI or the config files.
+
+
+--------------------------------------------------------------------------------
+
+Features:
+
+
+--------------------
+Run a Configuration File:
+
+    {program} config {filename}[extension]
+
+    y-cruncher config my-config.ini
+    y-cruncher config "file name with space"
+
+Run whatever is in the specified configuration file.
+If no extension is detected, it will automatically append ".ini".
+
+Configuration files follow a JSON-like object format. The contents of the
+config format vary depending on the action that is being run.
+
+There is currently no documentation for the object configs. But y-cruncher can
+generate them automatically and they can be manually edited.
+
+
+--------------------
+Benchmark Pi:
+
+    {program} bench {size} [-TD:{tasks}] [-PF:{framework}] [-MA:{allocator}]
+
+    y-cruncher bench 25m
+    y-cruncher bench 1b -TD:8
+    y-cruncher bench 1b -TD:1 -PF:none
+
+The valid values for {size} are:
+    25m, 50m, 100m, 250m, 500m,
+    1b, 2.5b, 5b, 10b, 25b, 50b, 100b, 250b, 500b,
+    1t, 2.5t,
+    1M, 2M, 4M, 8M, 16M, 32M, 64M, 128M, 256M, 512M,
+    1G, 2G, 4G, 8G, 16G, 32G, 64G, 128G
+
+
+
+--------------------
+Component Stress Tester:
+
+    {program} stress [-M:{memory bytes}] [-D:{duration}] [algorithm]
+
+    y-cruncher stress
+    y-cruncher stress -M:3.5G -D:300 FFT VST
+
+Runs a stress test using the specified parameters. Unspecified parameters are
+left at their defaults. By default, all algorithms are enabled. Specifying any
+algorithm disables the rest. Multiple algorithms can be specified.
+
+The valid values for [algorithm] are: BKT, FFT, N32, N64, HNT, VST, and C17
+The "C17" algorithm is not available on all processors.
+
+
+
+--------------------
+I/O Benchmark:
+
+    {program} benchio [-S:{disk bytes}] [-M:{memory bytes}]
+                      [-TD:{tasks}] [-PF:{framework}] [-MA:{allocator}]
+                      [-minIO:{Min I/O Size}] [-swap:{mode} [configuration]]
+
+    y-cruncher benchio -S:16.5G
+    y-cruncher benchio -S:16.5g -M:4g -T:8 -minIO:512k
+
+Runs the I/O benchmark using the specified parameters. Unspecified parameters are
+left at their defaults. When "-swap" is not specified, it will use a single path
+at the current working directory.
+
+
+
+--------------------------------------------------------------------------------
+Custom Compute:
+
+    {program} custom {constant[:param]}
+                     [-algorithm:{#}]
+                     [-dec:{decimal digits}]
+                     [-hex:{hexadecimal digits}]
+                     [-o {output path}]
+                     [-C:{compress}] or [-compress:{compress}]
+                     [-mode:{mode}]
+                     [-TD:{tasks}]
+                     [-PF:{framework}]
+                     [-MA:{allocator}]
+                     [-M:{memory bytes}]
+                     [-minIO:{Min I/O Size}]
+                     [-swap:{mode} [configuration]]
+
+    y-cruncher custom catalan -dec:1000000
+    y-cruncher custom log:2 -algorithm:1 -dec:100b -hex:0 -o "c:/" -compress:1b -verify:1 -mode:swap -TD:64 -M:120g -minIO:512k -swap:raid0 g:/ h:/ i:/ j:/
+
+Performs a custom computation using the specified parameters.
+
+The optional parameters are handled in the order they are specified as if they
+were manually entered into the Custom Compute menu UI.
+
+Automatic parameter correction and restrictions are done identically as in the
+UI. Therefore it is recommended to specify the parameters in the order they are
+listed above since that is the direction of the auto-correction dependencies.
+
+
+    Parameter: {constant:[param]}
+    Examples:  pi, log:2, sqrt:3
+
+    Valid Values: sqrt, phi, goldenratio, e, pi, arccoth, log, apery, zeta(3),
+                  lemniscate, catalan, gamma
+
+--------------------
+
+    Parameter: [-algorithm:{#}]
+    Examples:  -algorithm:0, -algorithm:1
+
+    "#" specifies the algorithm number to use. The number corresponds to the
+    same numbers shown from within the UI. 0 is the default algorithm. The
+    number of algorithms varies with each constant.
+
+--------------------
+
+    Parameter: [-dec:{decimal digits}] [-hex:{hexadecimal digits}]
+    Examples:  -dec:1000000 -hex:0, -dec:100m
+
+    Sets the number of digits to compute. "-dec" and "-hex" inherently override
+    each other. The only time it is meaningful to use both is "-dec:X -hex:0"
+    which will compute X decimal digits and disables the hexadecimal digits.
+
+    Suffixes are accepted: 500k, 100m, 10b, 2t
+    Suffixes are not case sensitive.
+
+--------------------
+
+    Parameter: [-o {output path}]
+    Examples:  -o c:/digits, -o "c:/path with space"
+
+    Output the digits to the specified path.
+
+--------------------
+
+    Parameter: [-C:{compress}] or [-compress:{compress}]
+    Examples:  -compress:0, -compress:-1, -compress:1000000000 -compress:100m
+
+    Compress the digits using the specified number of digits per file.
+    If the # is zero, compression is disabled and the output will be text files.
+    If the # is -1, the output will be compressed into a single file.
+
+    Suffixes are accepted: 500k, 100m, 10b, 2t
+    Suffixes are not case sensitive.
+
+--------------------
+
+    Parameter: [-mode:{mode}]
+    Examples:  -mode:ram, -mode:swap
+
+    Pretty self-explanatory. Those are the only two valid options.
+
+--------------------
+
+    Parameter: [-verify:0] or [-verify:1]
+    Examples:  -verify:0, -verify:1
+
+    "-verify:1" enables verification of the base conversion and output digits.
+    "-verify:0" disables these verifications.
+
+    Enabling verification is mandatory when claiming a new world record size
+    computation.
+
+--------------------
+
+    The options, "-M", "-minIO", and "-swap" are only valid in swap mode.
+
+
+
+

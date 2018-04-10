@@ -1,0 +1,36 @@
+y-cruncher - Euler's Constant to the eXtReMe
+
+Version: 0.7.5 Build 9481
+Copyright 2008-2019 by Alexander J. Yee
+E-mail: a-yee@u.northwestern.edu
+Website: www.numberworld.org
+
+
+
+y-cruncher, (y for gamma) is a number crunching program that can compute
+various mathematical constants.
+
+It was originally a small program specialized for computing the
+Euler-Mascheroni Constant. (which uses gamma as its symbol, hence the name)
+It has since gained the ability to compute other constants.
+
+
+
+Copyright:
+
+You may use and distribute this software free of charge for any
+non-commercial purpose. You may also use this software for any academic
+purpose (including technology reviews), even if they are commercial.
+
+
+Disclaimer:
+
+This software is provided "as is", without any guarantee made to its
+suitability or fitness for any particular use. It may contain bugs so use
+of this software is at your own risk. I take no responsibility for any
+damage that may unintentionally be caused through its use.
+
+
+
+February 24, 2017
+Alexander J. Yee
