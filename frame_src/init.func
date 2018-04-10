@@ -1,145 +1,152 @@
 #!/bin/sh 
 test_init()
 {
-		eval $XDEBUG
-				SESSION_ID="$(date +%Y%m%d-%H%M%S)"
-				WORK_DIR="$BASE_DIR/work-$SESSION_ID"
-				mkdir -p "$WORK_DIR/log"
-				mkdir -p "$WORK_DIR/log/tmux"
-				mkdir -p "$WORK_DIR/tmp"
-				mkdir -p "$WORK_DIR/testdir"
-				mkdir -p "$WORK_DIR/list"
+    eval $XDEBUG
+    mkdir -p "$WORK_DIR/log"
+    mkdir -p "$WORK_DIR/log/tmux"
+    mkdir -p "$WORK_DIR/tmp"
+    mkdir -p "$WORK_DIR/testdir"
+    mkdir -p "$WORK_DIR/list"
+    mkdir -p "$WORK_DIR/last-files"
+    TARGET_IP_LIST=$(grep -v "^[[:blank:]]*#" $BASE_DIR/dist/vm-list)
 
-				if [ -x "$TEST_SCRIPT" ]; then 
-						cp -avf "$TEST_SCRIPT" "$WORK_DIR/testdir"
-								TEST_SCRIPT="$WORK_DIR/testdir/$(basename $TEST_SCRIPT)"
-				else 
-						msg_warn "TEST_SCRIPT [$TEST_SCRIPT] can't excute, please check"
-								fi 
+    if [ -e "$TEST_PKG" ]; then 
+        cp -avf "$TEST_PKG" "$WORK_DIR/testdir"
+        TEST_PKG="$WORK_DIR/testdir/$(basename $TEST_PKG)"
+    else 
+        msg_err "TEST_PKG [$TEST_PKG] not exist, please check"
+        return 1
+    fi 
 
-								if [ -e "$TEST_PKG" ]; then 
-										cp -avf "$TEST_PKG" "$WORK_DIR/testdir"
-												TEST_PKG="$WORK_DIR/testdir/$(basename $TEST_PKG)"
-								else 
-										msg_warn "TEST_PKG [$TEST_PKG] not exist, please check"
-												fi 
+    cp -v $BASE_DIR/frame_src/tmux.conf $WORK_DIR/tmux.conf || xexit 1
+    #修改tmux的日志记录路径
+    sed -i "s|WORK_DIR|$WORK_DIR|g" $WORK_DIR/tmux.conf || xexit 1
 
-												cp -v $BASE_DIR/ptest_frame/tmux.conf $WORK_DIR/tmux.conf || xexit 1
-#修改tmux的日志记录路径
-												sed -i "s|WORK_DIR|$WORK_DIR|g" $WORK_DIR/tmux.conf || xexit 1
+    local tfile_list=
+    #判断是否有文件需要拷贝，有则将测试文件拷贝过去
+    if [ -e "$TEST_PKG" ]; then 
+        #是否需要中间机器跳转一下
+        if [ -n "$SSH_CROSS_PATH" ]; then 
+            #先把文件拷到中转机
+            ssh $SSH_OPT root@$SSH_CROSS_PATH rm -rf /tmp/perf-tmp.*
+            ssh $SSH_OPT root@$SSH_CROSS_PATH "rm -rf $TMP_DIR; mkdir -p $TMP_DIR" || return 1
+            scp -r $SSH_OPT "$TEST_PKG" root@$SSH_CROSS_PATH:$TMP_DIR || return 1
+            #逐个机器的拷文件
+            for tmpip in $TARGET_IP_LIST
+            do 
+                NR_TARGET=$(( NR_TARGET + 1 ))
+                #尽量保存老的测试日志
+                mkdir -p "$WORK_DIR/last-files/$tmpip"
+                tfile_list=$(ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip ls -d /tmp/perf-tmp.*)
+                ssh $SSH_OPT root@$SSH_CROSS_PATH rm -rf $tfile_list
+                for d in $tfile_list
+                do
+                    ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip rm -rf $d/dist*
+                    ssh $SSH_OPT root@$SSH_CROSS_PATH scp -r $SSH_OPT root@$tmpip:$d $d
+                    scp -r $SSH_OPT root@$SSH_CROSS_PATH:$d "$WORK_DIR/last-files/$tmpip"
+                done
+                ssh $SSH_OPT root@$SSH_CROSS_PATH rm -rf $tfile_list
+                ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip rm -rf $tfile_list
+                #将需要拷贝的文件放到测试机上
+                ssh $SSH_OPT root@$SSH_CROSS_PATH scp -r $SSH_OPT $TMP_DIR root@$tmpip:$TMP_DIR || return 1
+            done 
+            ssh $SSH_OPT root@$SSH_CROSS_PATH rm -rf /tmp/perf-tmp.*
+        else 
+            for tmpip in $TARGET_IP_LIST
+            do 
+                NR_TARGET=$(( NR_TARGET + 1 ))
+                #尽量保存老的测试日志
+                mkdir -p "$WORK_DIR/last-files/$tmpip"
+                tfile_list=$(ssh $SSH_OPT root@$tmpip ls -d /tmp/perf-tmp.*)
+                for d in $tfile_list
+                do
+                    ssh $SSH_OPT root@$tmpip rm -rf $d/dist*
+                    scp -r $SSH_OPT root@$tmpip:$d "$WORK_DIR/last-files/$tmpip"
+                done
+                #将需要拷贝的文件放到测试机上
+                ssh $SSH_OPT root@$tmpip "rm -rf /tmp/perf-tmp.*; mkdir -p $TMP_DIR" || return 1
+                scp -r $SSH_OPT "$TEST_PKG" root@$tmpip:$TMP_DIR || return 1
+            done 
+        fi 
+    else 
+        msg_err "TEST_PKG[$TEST_PKG] not exist."
+        return 1
+    fi 
 
-#判断是否有文件需要拷贝，有则将测试文件拷贝过去
-												if [ -e "$TEST_PKG" -o -e "$TEST_SCRIPT" ]; then 
-#是否需要中间机器跳转一下
-														if [ -n "$SSH_CROSS_PATH" ]; then 
-																ssh $SSH_OPT root@$SSH_CROSS_PATH "rm -rf $TMP_DIR; mkdir -p $TMP_DIR" || return 1
-																		scp -r $SSH_OPT "$TEST_PKG" "$TEST_SCRIPT" root@$SSH_CROSS_PATH:$TMP_DIR || return 1
-																		for tmpip in $TARGET_IP_LIST
-																				do 
-																						NR_TARGET=$(( NR_TARGET + 1 ))
-																								ssh $SSH_OPT root@$SSH_CROSS_PATH scp -r $SSH_OPT $TMP_DIR root@$tmpip:$TMP_DIR || return 1
-																								done 
-														else 
-																for tmpip in $TARGET_IP_LIST
-																		do 
-																				NR_TARGET=$(( NR_TARGET + 1 ))
-																						ssh $SSH_OPT root@$tmpip "rm -rf $TMP_DIR; mkdir -p $TMP_DIR" || return 1
-																						scp -r $SSH_OPT "$TEST_PKG" "$TEST_SCRIPT" root@$tmpip:$TMP_DIR || return 1
-																						done 
-																						fi 
-																						fi 
-
-#切换到工作目录，准备开始测试
-																						cd "$WORK_DIR"
+    env > "$WORK_DIR/env"
+    #切换到工作目录，准备开始测试
+    cd "$WORK_DIR"
 }
 
 #配置tmux
 setup_tmux_run()
 {
-		test_init "$@" || return 1
-				eval $XDEBUG
-				TMUX="/usr/local/bin/tmux -f $WORK_DIR/tmux.conf -S $WORK_DIR/tmux"
-				resize > tmp/resize.total
-				source tmp/resize.total
+    test_init "$@" || return 1
+    eval $XDEBUG
+    TMUX="$(which tmux) -f $WORK_DIR/tmux.conf -S $WORK_DIR/tmux"
 
-				$TMUX new-session -d -s "$SESSION_ID" -n win_0
-				$TMUX list-sessions 
-				$TMUX list-windows -t "$SESSION_ID"
+    $TMUX new-session -d -s "$SESSION_ID" -n win_0
+    $TMUX list-sessions 
+    $TMUX list-windows -t "$SESSION_ID"
 
-#超出这些行和列则分割
-				local split_columns=120
-				local split_lines=40
-				local nr_pane=$NR_TARGET
-				local nr_wind=$nr_pane
-				local pane_per_wind=1
+    #每个wind2个pane
+    local nr_pane=$NR_TARGET
+    local nr_wind=$(( nr_pane / 2 ))
+    msg_warn "nr_pane=$nr_pane nr_wind=$nr_wind"
 
-#计算需要多少个wind，如果屏幕空间足够，则分割
-				[ $COLUMNS -gt $split_columns ] && pane_per_wind=$(( pane_per_wind * 2 ))
-				[ $LINES -gt $split_lines ] && pane_per_wind=$(( pane_per_wind * 2 ))
-				nr_wind=$(( nr_pane / pane_per_wind ))
-				[ $(( nr_pane % pane_per_wind )) -eq 0 ] && nr_wind=$(( nr_wind - 1 ))
+    #先将tmux分割
+    rm -rf list/tmux.pane.list
+    for i in $(seq 0 $(( nr_wind - 1 )))
+    do 
+        #超出1个window则新建
+        if [ $i -ne 0 ]; then 
+            $TMUX new-window -n $i
+            $TMUX select-window -t $i
+        fi 
+        #左右分
+        $TMUX split-window -h -p 50
+        echo "$i 0" >> list/tmux.pane.list
+        echo "$i 1" >> list/tmux.pane.list
+        $TMUX list-panes
+    done 
 
-#先将tmux分割
-				rm -rf list/tmux.pane.list
-				for i in `seq 0 $nr_wind`
-						do 
-#超出1个window则新建
-								if [ $i -ne 0 ]; then 
-										$TMUX new-window -n win_$i
-												$TMUX select-window -t win_$i
-												fi 
-												if [ $LINES -gt $split_lines ] && [ $COLUMNS -gt $split_columns ]; then 
-#四分
-														$TMUX split-window -v -p 50
-																$TMUX split-window -h -p 50
-																$TMUX select-pane -t 0
-																$TMUX split-window -h -p 50
-																echo "win_$i 0" >> list/tmux.pane.list
-																echo "win_$i 1" >> list/tmux.pane.list
-																echo "win_$i 2" >> list/tmux.pane.list
-																echo "win_$i 3" >> list/tmux.pane.list
-																elif [ $LINES -gt $split_lines ] && [ $COLUMNS -lt $split_columns ]; then
-#上下分
-																$TMUX split-window -v -p 50
-																echo "win_$i 0" >> list/tmux.pane.list
-																echo "win_$i 1" >> list/tmux.pane.list
-																elif [ $LINES -lt $split_lines ] && [ $COLUMNS -gt $split_columns ]; then
-#左右分
-																$TMUX split-window -h -p 50
-																echo "win_$i 0" >> list/tmux.pane.list
-																echo "win_$i 1" >> list/tmux.pane.list
-												else 
-														echo "win_$i 0" >> list/tmux.pane.list
-																fi 
-																$TMUX list-panes
-																done 
+    #逐个给各窗口分配任务
+    #窗口编号
+    local pane_num=1
+    #窗口名称
+    local sel_wind=
+    #操作面板编号
+    local sel_pane=
+    local cmd_sh=
 
-#逐个给各窗口分配任务
-#窗口编号
-																local pane_num=1
-#窗口名称
-																local sel_wind=
-#操作面板编号
-																local sel_pane=
+    #启动测试脚本
+    for tmpip in $TARGET_IP_LIST
+    do 
 
-#启动测试脚本
-																for tmpip in $TARGET_IP_LIST
-																		do 
+        sel_wind=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $1}'`
+        sel_pane=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $2}'`
+        msg_warn "sel_wind=$sel_wind sel_pane=$sel_pane"
+        $TMUX select-window -t $sel_wind
+        $TMUX select-pane -t $sel_pane
+        $TMUX pipe-pane -o "cat >> $WORK_DIR/log/tmux/runner_${tmpip}.log"
+        cmd_sh="$WORK_DIR/testdir/cmd-${sel_wind}-${sel_pane}.sh"
+        if [ -n "$SSH_CROSS_PATH" ]; then
+            echo "#!/bin/sh" > "$cmd_sh"
+            echo "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip tar -C $TMP_DIR -xf $TMP_DIR/$(basename $TEST_PKG) && " >> "$cmd_sh"
+            echo "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip $TMP_DIR/$(basename $TEST_SCRIPT)" >> "$cmd_sh"
+            chmod +x "$cmd_sh"
+            $TMUX send-keys "sh $cmd_sh" Enter
+        else 
+            echo "#!/bin/sh" > "$cmd_sh"
+            echo "ssh $SSH_OPT root@$tmpip tar -C $TMP_DIR -xf $TMP_DIR/$(basename $TEST_PKG)" >> "$cmd_sh"
+            echo "ssh $SSH_OPT root@$tmpip $TMP_DIR/dist/$(basename $TEST_SCRIPT) $TMP_DIR" >> "$cmd_sh"
+            chmod +x "$cmd_sh"
+            $TMUX send-keys "sh $cmd_sh" Enter
+        fi 
+        pane_num=$(( pane_num + 1 ))
+    done 
 
-																				sel_wind=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $1}'`
-																						sel_pane=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $2}'`
-																						$TMUX select-window -t $sel_wind
-																						$TMUX select-pane -t $sel_pane
-																						$TMUX pipe-pane -o "cat >> $WORK_DIR/log/tmux/runner_${tmpip}.log"
-																						if [ -n "$SSH_CROSS_PATH" ]; then
-																								$TMUX send-keys "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip $TMP_DIR/$(basename $TEST_SCRIPT)" Enter
-																						else 
-																								$TMUX send-keys "ssh $SSH_OPT root@$tmpip $TMP_DIR/$(basename $TEST_SCRIPT) $TMP_DIR" Enter
-																										fi 
-																										pane_num=$(( pane_num + 1 ))
-																										done 
-
-#将tmux放到前台
-																										$TMUX attach-session -t "$SESSION_ID"
+    #将tmux放到前台
+    $TMUX attach-session -t "$SESSION_ID"
 }
 

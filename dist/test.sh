@@ -1,5 +1,6 @@
 #!/bin/sh
 
+TDIR=$1
 NR_ITER=2
 NR_UNIXBENCH=1
 NR_Y_CRUNCHER=1
@@ -7,18 +8,18 @@ NR_SYSBENCH=1
 NR_QPERF=1
 LOG_PREFIX=$$
 NR_CPU=$(cat /proc/cpuinfo | grep -i processor | wc -l)
-RUN_FLAG=/root/perf.run.flag
+RUN_FLAG=$TDIR/perf.run.flag
 SSH_OPT="-o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no -o ConnectTimeout=5"
 
 test_unixbench()
 {
 	local nr_iter=1
-	local logfile=/root/result.${LOG_PREFIX}.unixbench.log
+	local logfile=$TDIR/result.${LOG_PREFIX}.unixbench.log
 	local ts=
 	local te=
 	local tc=
 	[ -n "$1" ] && nr_iter=$1
-	cd /root/dist/unixbench-5.1.2
+	cd $TDIR/dist/unixbench-5.1.2
 	for i in $(seq $nr_iter)
 	do 
 		[ -f $RUN_FLAG ] || return
@@ -34,12 +35,12 @@ test_unixbench()
 test_y_cruncher()
 {
 	local nr_iter=1
-	local logfile=/root/result.${LOG_PREFIX}.y-cruncher.log
+	local logfile=$TDIR/result.${LOG_PREFIX}.y-cruncher.log
 	local ts=
 	local te=
 	local tc=
 	[ -n "$1" ] && nr_iter=$1
-	cd /root/dist/y-cruncher_v0.7.5.9481-static
+	cd $TDIR/dist/y-cruncher_v0.7.5.9481-static
 	for i in $(seq $nr_iter)
 	do 
 		[ -f $RUN_FLAG ] || return
@@ -75,12 +76,12 @@ test_sysbench_memory()
 test_sysbench()
 {
 	local nr_iter=1
-	local logfile=/root/result.${LOG_PREFIX}.sysbench.log
+	local logfile=$TDIR/result.${LOG_PREFIX}.sysbench.log
 	local ts=
 	local te=
 	local tc=
 	[ -n "$1" ] && nr_iter=$1
-	cd /root/dist/sysbench-1.0.14/testbin/bin
+	cd $TDIR/dist/sysbench-1.0.14/testbin/bin
 	for i in $(seq $nr_iter)
 	do 
 		[ -f $RUN_FLAG ] || return
@@ -119,7 +120,7 @@ test_sysbench()
 test_qperf()
 {
 	local nr_iter=1
-	local logfile=/root/result.${LOG_PREFIX}.qperf.log
+	local logfile=$TDIR/result.${LOG_PREFIX}.qperf.log
 	local ts=
 	local te=
 	local tc=
@@ -193,8 +194,8 @@ do_test()
 
 main()
 {
-	if [ ! -f /root/dist/compile.done ]; then 
-		cd /root/dist
+	if [ ! -f $TDIR/dist/compile.done ]; then 
+		cd $TDIR/dist
 		sh ./do_compile.sh || return 1
 	fi 
 	rm -rf $RUN_FLAG ${RUN_FLAG}*
@@ -210,4 +211,4 @@ main()
 	done 
 }
 
-main "$@" 2>&1 | tee -a /root/all.test.log
+main "$@" 2>&1 | tee -a $TDIR/all.test.log

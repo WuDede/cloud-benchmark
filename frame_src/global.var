@@ -6,29 +6,29 @@ export LANG=en_US.UTF-8
 #测试顶层目录
 export BASE_DIR="$(pwd)"
 
+#用作tmux的session id
+export SESSION_ID="$(date +%Y%m%d-%H%M%S)"
+
 #本次测试的工作目录
-export WORK_DIR=""
+export WORK_DIR="$BASE_DIR/work-$SESSION_ID"
 
 #tmux命令执行方式
 export TMUX=""
 
 #临时目录
-export TMP_DIR="$(mktemp -u)"
-
-#对话ID，新起一次测试随机生成，如果已配置则表示是续跑或者重跑
-export SESSION_ID=""
+export TMP_DIR="$(mktemp -t perf-tmp.XXXXXXXXXX -u)"
 
 #SSH登录路径
 export SSH_LOGIN_PATH=""
 
 #测试包
-export TEST_PKG=""
+export TEST_PKG="dist.tar.gz"
 
 #测试对象的IP列表
 export USER_IP_LIST=""
 
 #测试脚本
-export TEST_SCRIPT=""
+export TEST_SCRIPT="test.sh"
 
 #有多少个测试对象
 export NR_TARGET=0
