@@ -7,7 +7,6 @@ main()
 
 	#wget http://soft.vpser.net/test/unixbench/unixbench-5.1.2.tar.gz
 	cd ./unixbench-5.1.2 &&
-	make clean &&
 	make || return 1
 	cd $xpwd
 
