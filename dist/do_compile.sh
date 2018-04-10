@@ -20,8 +20,8 @@ main()
 
 	#wget http://www.numberworld.org/y-cruncher/y-cruncher%20v0.7.5.9481-static.tar.gz
 
-	rm -rf /root/dist/compile.done
-	touch /root/dist/compile.done
+	rm -rf $1
+	touch $1
 }
 
 main "$@"

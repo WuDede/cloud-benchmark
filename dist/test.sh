@@ -1,7 +1,7 @@
 #!/bin/sh
 
 TDIR=$1
-NR_ITER=2
+NR_ITER=1000
 NR_UNIXBENCH=1
 NR_Y_CRUNCHER=1
 NR_SYSBENCH=1
@@ -196,7 +196,7 @@ main()
 {
 	if [ ! -f $TDIR/dist/compile.done ]; then 
 		cd $TDIR/dist
-		sh ./do_compile.sh || return 1
+		sh ./do_compile.sh $TDIR/dist/compile.done || return 1
 	fi 
 	rm -rf $RUN_FLAG ${RUN_FLAG}*
 	touch $RUN_FLAG
