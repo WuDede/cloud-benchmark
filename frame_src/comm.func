@@ -1,0 +1,115 @@
+#!/bin/sh 
+#公共函数脚本，所有脚本都可能用到
+
+export SSH_OPT="-o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no -o ConnectTimeout=5"
+
+#打印调试信息，用法是eval $XDEBUG
+export XDEBUG="msg_dbg \"\${LINENO}:\${FUNCNAME[1]}->\${FUNCNAME[0]}\" >&2"
+
+#设置默认语言为英语
+export LANG=en_US.UTF-8
+
+# $1 -- attr
+# $2 -- foreground color
+# $3 -- information
+xmsg()
+{
+		echo -e "\033[$1;$2m`date '+[%Y-%m-%d %H:%M:%S]'`$3\033[0m"
+}
+
+msg_show()
+{
+		xmsg 1 34 "[MSG]$*"
+}
+
+msg_help()
+{
+		echo -e "\033[1;35m$*\033[0m"
+}
+
+msg_dbg()
+{
+		xmsg 1 30 "PWD=`pwd`"
+				xmsg 1 30 "$*"
+}
+
+msg_err()
+{
+		xmsg 1 31 "[ERROR]$*"
+}
+
+msg_warn()
+{
+		xmsg 0 33 "[WARN]$*"
+}
+
+msg_ok()
+{
+		xmsg 0 32 "[SUCCESS]$*"
+}
+
+xexit()
+{
+		eval $XDEBUG
+
+				if [ "$1" -eq 0 ]; then 
+						msg_ok "the test stop success"
+				else 
+						msg_err "the test stop wite some error"
+								fi 
+
+								exit $1
+}
+
+
+#远程执行ssh命令，不带-t参数
+sshy()
+{
+		local targetip=$1
+				shift
+				ssh -q $SSH_OPT root@$targetip "$@"
+}
+
+#远程执行ssh命令
+sshx()
+{
+		local targetip=$1
+				shift
+				ssh -q -t $SSH_OPT root@$targetip "$@"
+}
+
+#将本地指定文件远程拷贝到目标机的特定目录下
+scpx()
+{
+		for i in `seq 5`
+				do 
+						scp -q -r $SSH_OPT $@ root@$TARGET_IP:$BASE_DIR_BRD && return 0
+								sleep 1
+								done 
+								scp -vvv -r $SSH_OPT $@ root@$TARGET_IP:$BASE_DIR_BRD 
+								return $?
+}
+
+#将本地文件 $1 远程拷贝到目标机的 $2
+scpt()
+{
+		for i in `seq 5`
+				do 
+						scp -q -r $SSH_OPT $1 root@$TARGET_IP:$2 && return 0
+								sleep 1
+								done 
+								scp -vvv $SSH_OPT $1 root@$TARGET_IP:$2
+								return $?
+}
+
+#将远程的文件 $1 拷贝到本地的 $2
+scpf()
+{
+		for i in `seq 5`
+				do 
+						scp -q -r $SSH_OPT root@$TARGET_IP:$1 $2 && return 0
+								sleep 1
+								done 
+								scp -vvv -r $SSH_OPT root@$TARGET_IP:$1 $2
+								return $?
+}
