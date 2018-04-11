@@ -126,6 +126,7 @@ test_qperf()
 	local tc=
 	[ -n "$1" ] && nr_iter=$1
 
+    [ -f $RUN_FLAG ] || return
 	ts=$(awk '{print $1}' /proc/uptime)
 	#qperf test between 2 vms, so we need wait for another vm ready
 	#in vm-list has vm1 vm2
@@ -207,6 +208,7 @@ main()
 
 	for i in $(seq $NR_ITER)
 	do 
+		[ -f $RUN_FLAG ] || break
 		do_test "$@"
 	done 
 }
