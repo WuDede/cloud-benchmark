@@ -1,4 +1,5 @@
 #!/bin/sh
+# $1 -- 期望同时多少个VM一起跑测试，默认都跑
 
 source frame_src/comm.func
 source frame_src/global.var

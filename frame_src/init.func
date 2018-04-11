@@ -93,7 +93,8 @@ setup_tmux_run()
 
     #每个wind2个pane
     local nr_pane=$NR_TARGET
-    local nr_wind=$(( nr_pane / 2 ))
+    #加的一个是给manager.sh脚本使用的
+    local nr_wind=$(( nr_pane / 2 + 1 ))
     msg_warn "nr_pane=$nr_pane nr_wind=$nr_wind"
 
     #先将tmux分割
@@ -147,6 +148,14 @@ setup_tmux_run()
         fi
         pane_num=$(( pane_num + 1 ))
     done
+    #启动管理窗口
+    sel_wind=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $1}'`
+    sel_pane=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $2}'`
+    msg_warn "sel_wind=$sel_wind sel_pane=$sel_pane"
+    $TMUX select-window -t $sel_wind
+    $TMUX select-pane -t $sel_pane
+    $TMUX pipe-pane -o "cat >> $WORK_DIR/log/tmux/runner_manager.log"
+    $TMUX send-keys "sh $BASE_DIR/manager.sh $WORK_DIR $1" Enter
 
     #将tmux放到前台
     $TMUX attach-session -t "$SESSION_ID"

@@ -48,7 +48,8 @@ parse_unixbench()
     do
         echo -n "$i " | tee -a "$2"
         grep -w "samples" "$tmpdir/$i" | awk '{print $(NF-5)}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "unixbench" "$tmpdir/$i" | awk '{print $(NF-1)}' | tee -a "$2"
+        grep -w "unixbench" "$tmpdir/$i" | awk '{print $(NF-1)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "COST" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
     done
     rm -rf $tmpdir
 }
@@ -72,7 +73,7 @@ parse_y_cruncher()
         grep -w "Start-to-End Wall Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU Utilization:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Multi-core Efficiency:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "test y-cruncher at" "$tmpdir/$i" | awk '{print $(NF-1)}' | tee -a "$2"
+        grep -w "COST" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
     done
     rm -rf $tmpdir
 }
@@ -93,7 +94,7 @@ parse_sysbench()
         grep -w "CPU" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
         grep -w "MEMORY" "$tmpdir/$i" | sed "s|.*(\([0-9.]\+\)[[:blank:]]\+MiB/sec.*)|\1|g" | tr '\n' ' ' | tee -a "$2"
         grep -w "THREADS" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
-        echo "" | tee -a "$2"
+        grep -w "COST" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
     done
     rm -rf $tmpdir
 }

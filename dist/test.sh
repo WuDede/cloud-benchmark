@@ -1,5 +1,8 @@
 #!/bin/sh
+# $1 -- tmpdir
 
+MANAGER_IP=192.168.1.60
+MY_IP=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
 TDIR=$1
 NR_ITER=1000
 NR_UNIXBENCH=1
@@ -29,7 +32,7 @@ test_unixbench()
 		./Run -q -c $NR_CPU -i 1 system 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo unixbench test at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds >> $logfile
+		echo COST unixbench test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds >> $logfile
         echo "END_EOS_PERF_TEST UnixBench $i" | tee -a $logfile
 		sleep 3
 	done
@@ -67,7 +70,7 @@ test_y_cruncher()
 		./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo  test y-cruncher at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds >> $logfile
+		echo  COST test y-cruncher at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds >> $logfile
         echo "END_EOS_PERF_TEST y-cruncher $i" | tee -a $logfile
 		sleep 3
 	done
@@ -135,7 +138,7 @@ test_sysbench()
 
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo  "test sysbench at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds" | tee -a $logfile
+		echo  COST test sysbench at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds | tee -a $logfile
         echo "END_EOS_PERF_TEST sysbench $i" | tee -a $logfile
 		sleep 3
 	done
@@ -152,79 +155,62 @@ test_qperf()
 
     [ -f $RUN_FLAG ] || return
 	ts=$(awk '{print $1}' /proc/uptime)
-	#qperf test between 2 vms, so we need wait for another vm ready
+
 	#in vm-list has vm1 vm2
+    local qport=19765
+    local server_pid=
 	local myip=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
 	local vm1=$(grep -w "${myip}" $TDIR/dist/vm-list | grep -v "^[[:blank:]]*#" | awk '{print $1}')
 	local vm2=$(grep -w "${myip}" $TDIR/dist/vm-list | grep -v "^[[:blank:]]*#" | awk '{print $2}')
 	local reip=$([ "$myip" = "$vm1" ] && echo $vm2 || echo $vm1)
 	echo "myip=$myip reip=$reip vm1=$vm1 vm2=$vm2" | tee -a $logfile
 	[ -z "$myip" -o -z "$vm1" -o -z "$vm2" -o -z "$reip" ] && return 1
-	#mark that we are ok, if file ${RUN_FLAG}.qperf exist, means $reip ready
-    echo "[ssh $SSH_OPT root@$reip touch ${RUN_FLAG}.qperf]"
-	ssh $SSH_OPT root@$reip touch ${RUN_FLAG}.qperf
-	#start server
-    echo "[start qperf server]"
-	qperf 2>&1 > ${logfile}.qperf-server &
-	#wait the other vm ready
-    echo "wait the other vm ready"
-	while [ -f ${RUN_FLAG} -a -f ${RUN_FLAG}.qperf ]
-	do
-		sleep 3
-	done
-	# vm2 wait vm1 test ok
-    echo "vm2 wait vm1 test ok"
-	if [ "$myip" = "$vm2" ]; then
-		#vm1 test ok then create file ${RUN_FLAG}.qperf.step1
-		while [ ! -f ${RUN_FLAG}.qperf.step1 ] && [ -f ${RUN_FLAG} ]
-		do
-			sleep 10
-		done
-	fi
+
+    #固定vm1和vm2的端口号，vm1使用19763，vm2使用19764
+    if [ $myip = $vm1 ]; then
+        qport=19763
+    else
+        qport=19764
+    fi
+    #启动对端vm的服务
+    echo "my ip is $myip , now start $reip qperf server with port $qport"
+	ssh $SSH_OPT root@$reip "qperf --listen_port $qport > /dev/null 2>&1 &"
+    server_pid=$(ssh $SSH_OPT root@$reip "ps axfww" | grep -vw grep | grep -w "qperf --listen_port $qport" | awk '{print $1}')
+    [ -z "$server_pid" ] && { echo "server pid error"; return 1; }
+
 	#do test
 	for i in $(seq $nr_iter)
 	do
 		[ -f ${RUN_FLAG} ] || break
-        echo "do test [qperf $reip -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw]"
-		qperf $reip -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw 2>&1 | tee -a $logfile
+        echo "do test [qperf $reip --listen_port $qport -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw]"
+		qperf $reip --listen_port $qport -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw 2>&1 | tee -a $logfile
 	done
-	#vm1 wait vm2 test ok
-	if [ "$myip" = "$vm1" ]; then
-		rm -rf ${RUN_FLAG}.qperf.step1
-		touch ${RUN_FLAG}.qperf.step1
-        echo "touch ${RUN_FLAG}.qperf.step1"
-        echo "ssh $SSH_OPT root@$reip rm -rf ${RUN_FLAG}.qperf.step1; touch ${RUN_FLAG}.qperf.step1"
-		ssh $SSH_OPT root@$reip "rm -rf ${RUN_FLAG}.qperf.step1; touch ${RUN_FLAG}.qperf.step1"
-	else
-		rm -rf ${RUN_FLAG}.qperf.step2
-		touch ${RUN_FLAG}.qperf.step2
-        echo "touch ${RUN_FLAG}.qperf.step2"
-        echo "ssh $SSH_OPT root@$reip rm -rf ${RUN_FLAG}.qperf.step2; touch ${RUN_FLAG}.qperf.step2"
-		ssh $SSH_OPT root@$reip "rm -rf ${RUN_FLAG}.qperf.step2; touch ${RUN_FLAG}.qperf.step2"
-	fi
-	#wait all test ok
-    echo "wait all test ok"
-	while [ -f ${RUN_FLAG} ]
-	do
-		if [ -f ${RUN_FLAG}.qperf.step1 -a -f ${RUN_FLAG}.qperf.step2 ]; then
-			rm -rf ${RUN_FLAG}.qperf.step1 ${RUN_FLAG}.qperf.step2
-			kill -9 $(ps axf | grep -w qperf | grep -vw grep | awk '{print $1}')
-			break
-		fi
-		sleep 10
-	done
+
 	te=$(awk '{print $1}' /proc/uptime)
 	tc=$(echo $ts $te | awk '{print $2 - $1}')
-	echo  test qperf at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
+	echo  COST test qperf at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
 }
 
 do_test()
 {
+    #等待测试的标志文件，该文件存在，则表示测试可以进行，否则等待
+    while [ -f $RUN_FLAG ]
+    do
+        [ -f $TDIR/do_test.ring.flag ] && break
+        sleep 5
+    done
+    ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
+
 	test_unixbench $NR_UNIXBENCH
 	test_y_cruncher $NR_Y_CRUNCHER
 	test_sysbench $NR_SYSBENCH
 
-	#test_qperf $NR_QPERF
+	test_qperf $NR_QPERF
+
+    #测试完成，删除文件，同时设置管理机上的标志文件
+    rm -rf $TDIR/do_test.ring.flag
+    ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-end-flag.$MY_IP" || return 1
+    return 0
 }
 
 main()
@@ -244,8 +230,9 @@ main()
 	for i in $(seq $NR_ITER)
 	do
 		[ -f $RUN_FLAG ] || break
-		do_test "$@"
+		do_test "$@" || return 1
 	done
+    return 0
 }
 
 main "$@" 2>&1 | tee -a $TDIR/all.test.log
