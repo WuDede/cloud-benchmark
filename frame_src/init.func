@@ -13,6 +13,7 @@ test_init()
 
     if [ -e "$TEST_PKG" ]; then
         cp -avf "$TEST_PKG" "$WORK_DIR/testdir"
+        rm -rf "$TEST_PKG"
         TEST_PKG="$WORK_DIR/testdir/$(basename $TEST_PKG)"
     else
         msg_err "TEST_PKG [$TEST_PKG] not exist, please check"

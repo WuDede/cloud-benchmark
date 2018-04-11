@@ -76,3 +76,22 @@ parse_y_cruncher()
     done
     rm -rf $tmpdir
 }
+
+parse_sysbench()
+{
+    local tmpdir=$(mktemp -d)
+    local nr_rcd=0
+    local localfile=$tmpdir/$(basename $1)
+    cp -avf $1 $localfile
+
+    splite_file "start do sysbench test" "test sysbench at" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "test sysbench at" $localfile | wc -l)
+    for i in $(seq $nr_rcd)
+    do
+        echo -n "$i " | tee -a "$2"
+        grep -w "testmode.*written.*MiB" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "testmode.*written.*MiB" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "test y-cruncher at" "$tmpdir/$i" | awk '{print $(NF-1)}' | tee -a "$2"
+    done
+    rm -rf $tmpdir
+}

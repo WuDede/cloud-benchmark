@@ -21,16 +21,18 @@ test_unixbench()
 	[ -n "$1" ] && nr_iter=$1
 	cd $TDIR/dist/unixbench-5.1.2
 	for i in $(seq $nr_iter)
-	do 
+	do
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
+        echo "START_EOS_PERF_TEST UnixBench $i" | tee -a $logfile
         echo "./Run -q -c $NR_CPU -i 1 system"
 		./Run -q -c $NR_CPU -i 1 system 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
 		echo unixbench test at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds >> $logfile
+        echo "END_EOS_PERF_TEST UnixBench $i" | tee -a $logfile
 		sleep 3
-	done 
+	done
 }
 
 test_y_cruncher()
@@ -44,9 +46,9 @@ test_y_cruncher()
 	cd $TDIR/dist/y-cruncher_v0.7.5.9481-static
 
     local pi_bit="64M"
-    if [ $NR_CPU -eq 1 ]; then 
+    if [ $NR_CPU -eq 1 ]; then
         pi_bit=64M
-    elif [ $NR_CPU -le 4 ]; then 
+    elif [ $NR_CPU -le 4 ]; then
         pi_bit=128M
     elif [ $NR_CPU -gt 4 -a $NR_CPU -le 16 ]; then
         pi_bit=512M
@@ -54,19 +56,21 @@ test_y_cruncher()
         pi_bit=1G
     elif [ $NR_CPU -gt 32 ]; then
         pi_bit=2G
-    fi 
+    fi
 
 	for i in $(seq $nr_iter)
-	do 
+	do
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
+        echo "START_EOS_PERF_TEST y-cruncher $i" | tee -a $logfile
         echo "./y-cruncher bench $pi_bit"
 		./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
 		echo  test y-cruncher at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds >> $logfile
+        echo "END_EOS_PERF_TEST y-cruncher $i" | tee -a $logfile
 		sleep 3
-	done 
+	done
 }
 
 test_sysbench_fileio()
@@ -74,7 +78,7 @@ test_sysbench_fileio()
 	local timeout=30
 	local blksize=4096
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 prepare 1>&2
-	echo -n "sysbench timeout=$timeout blksize=$blksize testmode=$1 "
+	echo -n "FILEIO sysbench timeout=$timeout blksize=$blksize testmode=$1 "
 	echo "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run" 1>&2
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
 	echo ""
@@ -102,10 +106,12 @@ test_sysbench()
 	[ -n "$1" ] && nr_iter=$1
 	cd $TDIR/dist/sysbench-1.0.14/testbin/bin
 	for i in $(seq $nr_iter)
-	do 
+	do
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
+        echo "START_EOS_PERF_TEST sysbench $i" | tee -a $logfile
 
+        echo "start do sysbench test" | tee -a $logfile
 		for fileop in seqwr seqrd seqrewr rndwr rndrd rndrw
 		do
 			test_sysbench_fileio $fileop | tee -a $logfile
@@ -125,17 +131,18 @@ test_sysbench()
 		test_sysbench_memory 1K write rnd | tee -a $logfile
 
 		for trd_times in 1 2 4 8 16 32 64 128 256
-		do 
+		do
             echo "./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run"
 			echo -n "timeout=30 threads=$(( NR_CPU * trd_times )) " 2>&1 | tee -a $logfile
 			./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run 2>&1 | grep "total number of events:" 2>&1 | tee -a $logfile
-		done 
+		done
 
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo  test y-cruncher at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds >> $logfile
+		echo  "test sysbench at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds" | tee -a $logfile
+        echo "END_EOS_PERF_TEST sysbench $i" | tee -a $logfile
 		sleep 3
-	done 
+	done
 }
 
 test_qperf()
@@ -171,41 +178,41 @@ test_qperf()
 	done
 	# vm2 wait vm1 test ok
     echo "vm2 wait vm1 test ok"
-	if [ "$myip" = "$vm2" ]; then 
+	if [ "$myip" = "$vm2" ]; then
 		#vm1 test ok then create file ${RUN_FLAG}.qperf.step1
 		while [ ! -f ${RUN_FLAG}.qperf.step1 ] && [ -f ${RUN_FLAG} ]
 		do
 			sleep 10
-		done 
-	fi 
+		done
+	fi
 	#do test
 	for i in $(seq $nr_iter)
-	do 
+	do
 		[ -f ${RUN_FLAG} ] || break
         echo "do test [qperf $reip -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw]"
 		qperf $reip -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw 2>&1 | tee -a $logfile
-	done 
+	done
 	#vm1 wait vm2 test ok
-	if [ "$myip" = "$vm1" ]; then 
+	if [ "$myip" = "$vm1" ]; then
 		rm -rf ${RUN_FLAG}.qperf.step1
 		touch ${RUN_FLAG}.qperf.step1
         echo "touch ${RUN_FLAG}.qperf.step1"
         echo "ssh $SSH_OPT root@$reip rm -rf ${RUN_FLAG}.qperf.step1; touch ${RUN_FLAG}.qperf.step1"
 		ssh $SSH_OPT root@$reip "rm -rf ${RUN_FLAG}.qperf.step1; touch ${RUN_FLAG}.qperf.step1"
-	else 
+	else
 		rm -rf ${RUN_FLAG}.qperf.step2
 		touch ${RUN_FLAG}.qperf.step2
         echo "touch ${RUN_FLAG}.qperf.step2"
         echo "ssh $SSH_OPT root@$reip rm -rf ${RUN_FLAG}.qperf.step2; touch ${RUN_FLAG}.qperf.step2"
 		ssh $SSH_OPT root@$reip "rm -rf ${RUN_FLAG}.qperf.step2; touch ${RUN_FLAG}.qperf.step2"
-	fi 
+	fi
 	#wait all test ok
     echo "wait all test ok"
 	while [ -f ${RUN_FLAG} ]
 	do
-		if [ -f ${RUN_FLAG}.qperf.step1 -a -f ${RUN_FLAG}.qperf.step2 ]; then 
+		if [ -f ${RUN_FLAG}.qperf.step1 -a -f ${RUN_FLAG}.qperf.step2 ]; then
 			rm -rf ${RUN_FLAG}.qperf.step1 ${RUN_FLAG}.qperf.step2
-			kill -9 $(ps axf | grep -w qperf | grep -vw grep | awk '{print $1}') 
+			kill -9 $(ps axf | grep -w qperf | grep -vw grep | awk '{print $1}')
 			break
 		fi
 		sleep 10
@@ -220,29 +227,29 @@ do_test()
 	test_unixbench $NR_UNIXBENCH
 	test_y_cruncher $NR_Y_CRUNCHER
 	test_sysbench $NR_SYSBENCH
-	
+
 	#test_qperf $NR_QPERF
 }
 
 main()
 {
     #try compile tools
-	if [ ! -f $TDIR/dist/compile.done ]; then 
+	if [ ! -f $TDIR/dist/compile.done ]; then
 		cd $TDIR/dist
 		sh ./do_compile.sh $TDIR/dist/compile.done || return 1
-	fi 
+	fi
 	rm -rf $RUN_FLAG ${RUN_FLAG}*
 	touch $RUN_FLAG
 	for p in NR_ITER LOG_PREFIX NR_UNIXBENCH NR_Y_CRUNCHER NR_SYSBENCH NR_QPERF NR_CPU RUN_FLAG SSH_OPT
-	do 
+	do
 		eval echo "$p=\$$p"
-	done 
+	done
 
 	for i in $(seq $NR_ITER)
-	do 
+	do
 		[ -f $RUN_FLAG ] || break
 		do_test "$@"
-	done 
+	done
 }
 
 main "$@" 2>&1 | tee -a $TDIR/all.test.log
