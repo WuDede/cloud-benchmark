@@ -73,13 +73,12 @@ test_sysbench_fileio()
 {
 	local timeout=30
 	local blksize=4096
-	local rwratio=1
-	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio prepare 1>&2
-	echo -n "sysbench timeout=$timeout blksize=$blksize rwratio=$rwratio testmode=$1 "
-	echo "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run" 1>&2
-	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
+	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 prepare 1>&2
+	echo -n "sysbench timeout=$timeout blksize=$blksize testmode=$1 "
+	echo "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run" 1>&2
+	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
 	echo ""
-	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio cleanup 1>&2
+	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 cleanup 1>&2
 }
 
 test_sysbench_memory()
