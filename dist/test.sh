@@ -70,7 +70,7 @@ test_sysbench_memory()
 	local oper=$2
 	local mode=$3
 	echo -n "sysbench timeout=$timeout blksize=$blksize oper=$oper mode=$mode "
-	./sysbench --time=$timeout --num-threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run 2>&1 | grep "events per second:" | sed "s|[[:blank:]]\+| |g"
+	./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run 2>&1 | grep "MiB transferred"
 }
 
 test_sysbench()
@@ -93,7 +93,7 @@ test_sysbench()
 		done
 
 		echo -n "timeout=30 threads=$NR_CPU " 2>&1 | tee -a $logfile
-		./sysbench --time=30 --num-threads=$NR_CPU cpu run 2>&1 | grep "events per second:" 2>&1 | tee -a $logfile
+		./sysbench --time=30 --threads=$NR_CPU cpu run 2>&1 | grep "events per second:" 2>&1 | tee -a $logfile
 
 		test_sysbench_memory 8 read seq 2>&1 | tee -a $logfile
 		test_sysbench_memory 8 write seq 2>&1 | tee -a $logfile
