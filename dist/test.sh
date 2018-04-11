@@ -196,14 +196,14 @@ do_test()
 main()
 {
     #clean test env
-    local kpid=$(ps axfww | grep "dist/test.sh" | grep -vw grep)
-    [ -n "$kpid" ] && kill -9 $kpid
-    kpid=$(ps axfww | grep -w qperf | grep -vw grep)
-    [ -n "$kpid" ] && kill -9 $kpid
-    kpid=$(ps axfww | grep -w "perf.run.flag" | grep -vw grep)
-    [ -n "$kpid" ] && kill -9 $kpid
-    kpid=$(ps axfww | grep -w "perf-tmp" | grep -vw grep)
-    [ -n "$kpid" ] && kill -9 $kpid
+    #local kpid=$(ps axfww | grep "dist/test.sh" | grep -vw grep)
+    #[ -n "$kpid" ] && kill -9 $kpid
+    #kpid=$(ps axfww | grep -w qperf | grep -vw grep)
+    #[ -n "$kpid" ] && kill -9 $kpid
+    #kpid=$(ps axfww | grep -w "perf.run.flag" | grep -vw grep)
+    #[ -n "$kpid" ] && kill -9 $kpid
+    #kpid=$(ps axfww | grep -w "perf-tmp" | grep -vw grep)
+    #[ -n "$kpid" ] && kill -9 $kpid
 
     #try compile tools
 	if [ ! -f $TDIR/dist/compile.done ]; then 
