@@ -41,11 +41,23 @@ test_y_cruncher()
 	local tc=
 	[ -n "$1" ] && nr_iter=$1
 	cd $TDIR/dist/y-cruncher_v0.7.5.9481-static
+
+    local pi_bit="64M"
+    if [ $NR_CPU -le 4 ]; then 
+        pi_bit=128M
+    elif [ $NR_CPU -gt 4 -a $NR_CPU -le 16 ]; then
+        pi_bit=512M
+    elif [ $NR_CPU -gt 16 -a $NR_CPU -le 32]; then
+        pi_bit=1G
+    elif [ $NR_CPU -gt 32 ]; then
+        pi_bit=2G
+    fi 
+
 	for i in $(seq $nr_iter)
 	do 
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
-		./y-cruncher bench $(( NR_CPU * 16 ))M 2>&1 | tee -a $logfile
+		./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
 		echo  test y-cruncher at $(date "+%Y/%m/%d %H:%M:%S") cost $tc seconds >> $logfile
