@@ -107,7 +107,7 @@ test_sysbench()
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
 
-		for fileop in seqwr seqrd seqrewr rndwr rndrd rndrewr
+		for fileop in seqwr seqrd seqrewr rndwr rndrd rndrw
 		do
 			test_sysbench_fileio $fileop | tee -a $logfile
 		done
