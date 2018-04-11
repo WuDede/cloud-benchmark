@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 test_init()
 {
     eval $XDEBUG
@@ -11,13 +11,13 @@ test_init()
     cp -avf $BASE_DIR/dist/vm-list "$WORK_DIR/vm-list"
     TARGET_IP_LIST=$(grep -v "^[[:blank:]]*#" $BASE_DIR/dist/vm-list)
 
-    if [ -e "$TEST_PKG" ]; then 
+    if [ -e "$TEST_PKG" ]; then
         cp -avf "$TEST_PKG" "$WORK_DIR/testdir"
         TEST_PKG="$WORK_DIR/testdir/$(basename $TEST_PKG)"
-    else 
+    else
         msg_err "TEST_PKG [$TEST_PKG] not exist, please check"
         return 1
-    fi 
+    fi
 
     cp -v $BASE_DIR/frame_src/tmux.conf $WORK_DIR/tmux.conf || xexit 1
     #修改tmux的日志记录路径
@@ -25,16 +25,16 @@ test_init()
 
     local tfile_list=
     #判断是否有文件需要拷贝，有则将测试文件拷贝过去
-    if [ -e "$TEST_PKG" ]; then 
+    if [ -e "$TEST_PKG" ]; then
         #是否需要中间机器跳转一下
-        if [ -n "$SSH_CROSS_PATH" ]; then 
+        if [ -n "$SSH_CROSS_PATH" ]; then
             #先把文件拷到中转机
             ssh $SSH_OPT root@$SSH_CROSS_PATH rm -rf /tmp/perf-tmp.*
             ssh $SSH_OPT root@$SSH_CROSS_PATH "rm -rf $TMP_DIR; mkdir -p $TMP_DIR" || return 1
             scp -r $SSH_OPT "$TEST_PKG" root@$SSH_CROSS_PATH:$TMP_DIR || return 1
             #逐个机器的拷文件
             for tmpip in $TARGET_IP_LIST
-            do 
+            do
                 NR_TARGET=$(( NR_TARGET + 1 ))
                 #尽量保存老的测试日志
                 mkdir -p "$WORK_DIR/last-files/$tmpip"
@@ -50,11 +50,11 @@ test_init()
                 ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip rm -rf $tfile_list
                 #将需要拷贝的文件放到测试机上
                 ssh $SSH_OPT root@$SSH_CROSS_PATH scp -r $SSH_OPT $TMP_DIR root@$tmpip:$TMP_DIR || return 1
-            done 
+            done
             ssh $SSH_OPT root@$SSH_CROSS_PATH rm -rf /tmp/perf-tmp.*
-        else 
+        else
             for tmpip in $TARGET_IP_LIST
-            do 
+            do
                 NR_TARGET=$(( NR_TARGET + 1 ))
                 #尽量保存老的测试日志
                 mkdir -p "$WORK_DIR/last-files/$tmpip"
@@ -67,12 +67,12 @@ test_init()
                 #将需要拷贝的文件放到测试机上
                 ssh $SSH_OPT root@$tmpip "rm -rf /tmp/perf-tmp.*; mkdir -p $TMP_DIR" || return 1
                 scp -r $SSH_OPT "$TEST_PKG" root@$tmpip:$TMP_DIR || return 1
-            done 
-        fi 
-    else 
+            done
+        fi
+    else
         msg_err "TEST_PKG[$TEST_PKG] not exist."
         return 1
-    fi 
+    fi
 
     env > "$WORK_DIR/env"
     #切换到工作目录，准备开始测试
@@ -87,7 +87,7 @@ setup_tmux_run()
     TMUX="$(which tmux) -f $WORK_DIR/tmux.conf -S $WORK_DIR/tmux"
 
     $TMUX new-session -d -s "$SESSION_ID" -n win_0
-    $TMUX list-sessions 
+    $TMUX list-sessions
     $TMUX list-windows -t "$SESSION_ID"
 
     #每个wind2个pane
@@ -98,18 +98,18 @@ setup_tmux_run()
     #先将tmux分割
     rm -rf list/tmux.pane.list
     for i in $(seq 0 $(( nr_wind - 1 )))
-    do 
+    do
         #超出1个window则新建
-        if [ $i -ne 0 ]; then 
+        if [ $i -ne 0 ]; then
             $TMUX new-window -n $i
             $TMUX select-window -t $i
-        fi 
+        fi
         #左右分
         $TMUX split-window -h -p 50
         echo "$i 0" >> list/tmux.pane.list
         echo "$i 1" >> list/tmux.pane.list
         $TMUX list-panes
-    done 
+    done
 
     #逐个给各窗口分配任务
     #窗口编号
@@ -122,7 +122,7 @@ setup_tmux_run()
 
     #启动测试脚本
     for tmpip in $TARGET_IP_LIST
-    do 
+    do
 
         sel_wind=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $1}'`
         sel_pane=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $2}'`
@@ -137,15 +137,15 @@ setup_tmux_run()
             echo "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip $TMP_DIR/$(basename $TEST_SCRIPT)" >> "$cmd_sh"
             chmod +x "$cmd_sh"
             $TMUX send-keys "sh $cmd_sh" Enter
-        else 
+        else
             echo "#!/bin/sh" > "$cmd_sh"
             echo "ssh $SSH_OPT root@$tmpip tar -C $TMP_DIR -xf $TMP_DIR/$(basename $TEST_PKG)" >> "$cmd_sh"
             echo "ssh $SSH_OPT root@$tmpip $TMP_DIR/dist/$(basename $TEST_SCRIPT) $TMP_DIR" >> "$cmd_sh"
             chmod +x "$cmd_sh"
             $TMUX send-keys "sh $cmd_sh" Enter
-        fi 
+        fi
         pane_num=$(( pane_num + 1 ))
-    done 
+    done
 
     #将tmux放到前台
     $TMUX attach-session -t "$SESSION_ID"

@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 #全局变量清单
 
 export LANG=en_US.UTF-8
