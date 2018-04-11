@@ -37,10 +37,15 @@ main()
             sshx $xip "test -f $tmpdir/perf.run.flag && rm -rf $tmpdir/perf.run.flag"
             kpid=$(sshx $xip "ps axfww | grep dist/test.sh | grep -vw grep" | awk '{print $1}')
             [ -n "$kpid" ] && sshx $xip kill -9 $kpid
+            kpid=$(sshx $xip "ps axfww | grep -w Run | grep -vw grep" | awk '{print $1}')
+            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
             kpid=$(sshx $xip "ps axfww | grep -w qperf | grep -vw grep" | awk '{print $1}')
             [ -n "$kpid" ] && sshx $xip kill -9 $kpid
             kpid=$(sshx $xip "ps axfww | grep -w perf.run.flag | grep -vw grep" | awk '{print $1}')
             [ -n "$kpid" ] && sshx $xip kill -9 $kpid
+            kpid=$(sshx $xip "ps axfww | grep -w perf-tmp | grep -vw grep" | awk '{print $1}')
+            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
+            sshx $xip ps axf 
         fi
         if [ $glog_flag = true ]; then 
             msg_warn "now get logs from $xip:$tmpdir/result.*.log"

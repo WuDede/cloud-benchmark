@@ -71,7 +71,7 @@ test_sysbench_fileio()
 	local blksize=4096
 	local rwratio=1
 	echo -n "sysbench timeout=$timeout blksize=$blksize rwratio=$rwratio testmode=$1 "
-	./sysbench --time=$timeout fileio --file-block-size=blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
+	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
 	echo ""
 }
 
