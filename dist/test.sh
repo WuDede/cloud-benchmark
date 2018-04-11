@@ -78,8 +78,7 @@ test_sysbench_fileio()
 	local timeout=30
 	local blksize=4096
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 prepare 1>&2
-	echo -n "FILEIO sysbench timeout=$timeout blksize=$blksize testmode=$1 "
-	echo "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run" 1>&2
+	echo -n "FILEIO ./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run "
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
 	echo ""
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 cleanup 1>&2
@@ -91,8 +90,7 @@ test_sysbench_memory()
 	local blksize=$1
 	local oper=$2
 	local mode=$3
-	echo -n "sysbench timeout=$timeout blksize=$blksize oper=$oper mode=$mode "
-    echo "./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run" 1>&2
+    echo -n "MEMORY ./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run "
 	./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run 2>&1 | grep "MiB transferred"
 }
 
@@ -117,8 +115,7 @@ test_sysbench()
 			test_sysbench_fileio $fileop | tee -a $logfile
 		done
 
-        echo "./sysbench --time=30 --threads=$NR_CPU cpu run"
-		echo -n "timeout=30 threads=$NR_CPU " 2>&1 | tee -a $logfile
+        echo -n "CPU ./sysbench --time=30 --threads=$NR_CPU cpu run " 2>&1 | tee -a $logfile
 		./sysbench --time=30 --threads=$NR_CPU cpu run 2>&1 | grep "events per second:" 2>&1 | tee -a $logfile
 
 		test_sysbench_memory 8 read seq | tee -a $logfile
@@ -132,8 +129,7 @@ test_sysbench()
 
 		for trd_times in 1 2 4 8 16 32 64 128 256
 		do
-            echo "./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run"
-			echo -n "timeout=30 threads=$(( NR_CPU * trd_times )) " 2>&1 | tee -a $logfile
+            echo -n "THREADS ./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run " 2>&1 | tee -a $logfile
 			./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run 2>&1 | grep "total number of events:" 2>&1 | tee -a $logfile
 		done
 

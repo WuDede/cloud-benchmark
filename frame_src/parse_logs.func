@@ -42,8 +42,8 @@ parse_unixbench()
     local localfile=$tmpdir/$(basename $1)
     cp -avf $1 $localfile
 
-    splite_file "Benchmark Run:" "unixbench test at" "$localfile" "$tmpdir" || return 1
-    local nr_rcd=$(grep "Benchmark Run" $localfile | wc -l)
+    splite_file "START_EOS_PERF_TEST" "END_EOS_PERF_TEST" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
     for i in $(seq $nr_rcd)
     do
         echo -n "$i " | tee -a "$2"
@@ -63,8 +63,8 @@ parse_y_cruncher()
     sed -i "s|\x1B\[[0-9;]*[mK]||g" $localfile || return 1
     dos2unix $localfile || return 1
 
-    splite_file "Total Computation Time:" "test y-cruncher at" "$localfile" "$tmpdir" || return 1
-    local nr_rcd=$(grep "test y-cruncher at" $localfile | wc -l)
+    splite_file "START_EOS_PERF_TEST" "END_EOS_PERF_TEST" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
     for i in $(seq $nr_rcd)
     do
         echo -n "$i " | tee -a "$2"
@@ -84,14 +84,16 @@ parse_sysbench()
     local localfile=$tmpdir/$(basename $1)
     cp -avf $1 $localfile
 
-    splite_file "start do sysbench test" "test sysbench at" "$localfile" "$tmpdir" || return 1
-    local nr_rcd=$(grep "test sysbench at" $localfile | wc -l)
+    splite_file "START_EOS_PERF_TEST" "END_EOS_PERF_TEST" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
     for i in $(seq $nr_rcd)
     do
         echo -n "$i " | tee -a "$2"
-        grep -w "testmode.*written.*MiB" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "testmode.*written.*MiB" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "test y-cruncher at" "$tmpdir/$i" | awk '{print $(NF-1)}' | tee -a "$2"
+        grep -w "FILEIO" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "CPU" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "MEMORY" "$tmpdir/$i" | sed "s|.*(\([0-9.]\+\)[[:blank:]]\+MiB/sec.*)|\1|g" | tr '\n' ' ' | tee -a "$2"
+        grep -w "THREADS" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
+        echo "" | tee -a "$2"
     done
     rm -rf $tmpdir
 }
