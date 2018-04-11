@@ -130,8 +130,8 @@ test_qperf()
 	#qperf test between 2 vms, so we need wait for another vm ready
 	#in vm-list has vm1 vm2
 	local myip=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
-	local vm1=$(grep -w "${myip}" ./vm-list | grep -v "^[[:blank:]]*#" | awk '{print $1}')
-	local vm2=$(grep -w "${myip}" ./vm-list | grep -v "^[[:blank:]]*#" | awk '{print $2}')
+	local vm1=$(grep -w "${myip}" $TDIR/dist/vm-list | grep -v "^[[:blank:]]*#" | awk '{print $1}')
+	local vm2=$(grep -w "${myip}" $TDIR/dist/vm-list | grep -v "^[[:blank:]]*#" | awk '{print $2}')
 	local reip=$([ "$myip" = "$vm1" ] && echo $vm2 || echo $vm1)
 	echo "myip=$myip reip=$reip vm1=$vm1 vm2=$vm2" | tee -a $logfile
 	[ -z "$myip" -o -z "$vm1" -o -z "$vm2" -o -z "$reip" ] && return 1
@@ -202,7 +202,7 @@ main()
 	touch $RUN_FLAG
 	for p in NR_ITER LOG_PREFIX NR_UNIXBENCH NR_Y_CRUNCHER NR_SYSBENCH NR_QPERF NR_CPU RUN_FLAG SSH_OPT
 	do 
-		eval echo "$p=\$p"
+		eval echo "$p=\$$p"
 	done 
 
 	for i in $(seq $NR_ITER)
