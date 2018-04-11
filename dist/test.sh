@@ -218,8 +218,8 @@ test_qperf()
 
 do_test()
 {
-	#test_unixbench $NR_UNIXBENCH
-	#test_y_cruncher $NR_Y_CRUNCHER
+	test_unixbench $NR_UNIXBENCH
+	test_y_cruncher $NR_Y_CRUNCHER
 	test_sysbench $NR_SYSBENCH
 	
 	#test_qperf $NR_QPERF
