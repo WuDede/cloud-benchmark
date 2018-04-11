@@ -74,10 +74,12 @@ test_sysbench_fileio()
 	local timeout=30
 	local blksize=4096
 	local rwratio=1
-    msg_warn "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run"
+	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio prepare 1>&2
 	echo -n "sysbench timeout=$timeout blksize=$blksize rwratio=$rwratio testmode=$1 "
+	msg_warn "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run" 1>&2
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
 	echo ""
+	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio cleanup 1>&2
 }
 
 test_sysbench_memory()
@@ -86,8 +88,8 @@ test_sysbench_memory()
 	local blksize=$1
 	local oper=$2
 	local mode=$3
-    msg_warn "./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run"
 	echo -n "sysbench timeout=$timeout blksize=$blksize oper=$oper mode=$mode "
+    msg_warn "./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run" 1>&2
 	./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run 2>&1 | grep "MiB transferred"
 }
 
@@ -107,21 +109,21 @@ test_sysbench()
 
 		for fileop in seqwr seqrd seqrewr rndwr rndrd rndrewr
 		do
-			test_sysbench_fileio $fileop 2>&1 | tee -a $logfile
+			test_sysbench_fileio $fileop | tee -a $logfile
 		done
 
         msg_warn "./sysbench --time=30 --threads=$NR_CPU cpu run"
 		echo -n "timeout=30 threads=$NR_CPU " 2>&1 | tee -a $logfile
 		./sysbench --time=30 --threads=$NR_CPU cpu run 2>&1 | grep "events per second:" 2>&1 | tee -a $logfile
 
-		test_sysbench_memory 8 read seq 2>&1 | tee -a $logfile
-		test_sysbench_memory 8 write seq 2>&1 | tee -a $logfile
-		test_sysbench_memory 8 read rnd 2>&1 | tee -a $logfile
-		test_sysbench_memory 8 write rnd 2>&1 | tee -a $logfile
-		test_sysbench_memory 1K read seq 2>&1 | tee -a $logfile
-		test_sysbench_memory 1K write seq 2>&1 | tee -a $logfile
-		test_sysbench_memory 1K read rnd 2>&1 | tee -a $logfile
-		test_sysbench_memory 1K write rnd 2>&1 | tee -a $logfile
+		test_sysbench_memory 8 read seq | tee -a $logfile
+		test_sysbench_memory 8 write seq | tee -a $logfile
+		test_sysbench_memory 8 read rnd | tee -a $logfile
+		test_sysbench_memory 8 write rnd | tee -a $logfile
+		test_sysbench_memory 1K read seq | tee -a $logfile
+		test_sysbench_memory 1K write seq | tee -a $logfile
+		test_sysbench_memory 1K read rnd | tee -a $logfile
+		test_sysbench_memory 1K write rnd | tee -a $logfile
 
 		for trd_times in 1 2 4 8 16 32 64 128 256
 		do 

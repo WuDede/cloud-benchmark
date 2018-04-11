@@ -34,16 +34,8 @@ main()
         msg_show "now $xip"
         if [ $stop_flag = true ]; then 
             msg_warn "now rm -rf the file $tmpdir/perf.run.flag in $xip to stop the test"
-            sshx $xip "test -f $tmpdir/perf.run.flag && rm -rf $tmpdir/perf.run.flag"
-            kpid=$(sshx $xip "ps axfww | grep dist/test.sh | grep -vw grep" | awk '{print $1}')
-            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
-            kpid=$(sshx $xip "ps axfww | grep -w Run | grep -vw grep" | awk '{print $1}')
-            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
-            kpid=$(sshx $xip "ps axfww | grep -w qperf | grep -vw grep" | awk '{print $1}')
-            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
-            kpid=$(sshx $xip "ps axfww | grep -w perf.run.flag | grep -vw grep" | awk '{print $1}')
-            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
-            kpid=$(sshx $xip "ps axfww | grep -w perf-tmp | grep -vw grep" | awk '{print $1}')
+            sshx $xip "rm -rf $tmpdir/perf.run.flag"
+            kpid=$(sshx $xip "ps axfww" | grep -vw grep | grep -w "dist/test.sh\|Run\|unixbench\|qperf\|perf.run.flag\|perf-tmp\|sysbench" | awk '{print $1}')
             [ -n "$kpid" ] && sshx $xip kill -9 $kpid
             sshx $xip ps axf 
         fi

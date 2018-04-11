@@ -17,6 +17,17 @@ main()
         log_ub="$1"/$(ls "$1" | grep unixbench.log)
         parse_unixbench $log_ub "$tmpdir/unixbench"
     fi 
+
+    if [ $(ls "$1" | grep y-cruncher.log | wc -l) -ne 1 ]; then 
+        msg_err "y-cruncher log file not ok"
+        return 1
+    else 
+        log_ub="$1"/$(ls "$1" | grep y-cruncher.log)
+        parse_y_cruncher $log_ub "$tmpdir/y-cruncher"
+    fi 
+
+    echo $tmpdir
+    #rm -rf $tmpdir
 }
 
 main "$@"
