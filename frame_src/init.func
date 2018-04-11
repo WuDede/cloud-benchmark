@@ -8,6 +8,7 @@ test_init()
     mkdir -p "$WORK_DIR/testdir"
     mkdir -p "$WORK_DIR/list"
     mkdir -p "$WORK_DIR/last-files"
+    cp -avf $BASE_DIR/dist/vm-list "$WORK_DIR/vm-list"
     TARGET_IP_LIST=$(grep -v "^[[:blank:]]*#" $BASE_DIR/dist/vm-list)
 
     if [ -e "$TEST_PKG" ]; then 

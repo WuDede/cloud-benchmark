@@ -14,102 +14,97 @@ export LANG=en_US.UTF-8
 # $3 -- information
 xmsg()
 {
-		echo -e "\033[$1;$2m`date '+[%Y-%m-%d %H:%M:%S]'`$3\033[0m"
+    echo -e "\033[$1;$2m`date '+[%Y-%m-%d %H:%M:%S]'`$3\033[0m"
 }
 
 msg_show()
 {
-		xmsg 1 34 "[MSG]$*"
+    xmsg 1 34 "[MSG]$*"
 }
 
 msg_help()
 {
-		echo -e "\033[1;35m$*\033[0m"
+    echo -e "\033[1;35m$*\033[0m"
 }
 
 msg_dbg()
 {
-		xmsg 1 30 "PWD=`pwd`"
-				xmsg 1 30 "$*"
+    xmsg 1 30 "PWD=`pwd`"
+    xmsg 1 30 "$*"
 }
 
 msg_err()
 {
-		xmsg 1 31 "[ERROR]$*"
+    xmsg 1 31 "[ERROR]$*"
 }
 
 msg_warn()
 {
-		xmsg 0 33 "[WARN]$*"
+    xmsg 0 33 "[WARN]$*"
 }
 
 msg_ok()
 {
-		xmsg 0 32 "[SUCCESS]$*"
+    xmsg 0 32 "[SUCCESS]$*"
 }
 
 xexit()
 {
-		eval $XDEBUG
+    eval $XDEBUG
 
-				if [ "$1" -eq 0 ]; then 
-						msg_ok "the test stop success"
-				else 
-						msg_err "the test stop wite some error"
-								fi 
+    if [ "$1" -eq 0 ]; then 
+        msg_ok "the test stop success"
+    else 
+        msg_err "the test stop wite some error"
+    fi 
 
-								exit $1
+    exit $1
 }
 
 
 #远程执行ssh命令，不带-t参数
 sshy()
 {
-		local targetip=$1
-				shift
-				ssh -q $SSH_OPT root@$targetip "$@"
+    local targetip=$1
+    shift
+    ssh -q $SSH_OPT root@$targetip "$@"
 }
 
 #远程执行ssh命令
 sshx()
 {
-		local targetip=$1
-				shift
-				ssh -q -t $SSH_OPT root@$targetip "$@"
-}
-
-#将本地指定文件远程拷贝到目标机的特定目录下
-scpx()
-{
-		for i in `seq 5`
-				do 
-						scp -q -r $SSH_OPT $@ root@$TARGET_IP:$BASE_DIR_BRD && return 0
-								sleep 1
-								done 
-								scp -vvv -r $SSH_OPT $@ root@$TARGET_IP:$BASE_DIR_BRD 
-								return $?
+    local targetip=$1
+    shift
+    ssh -q -t $SSH_OPT root@$targetip "$@"
 }
 
 #将本地文件 $1 远程拷贝到目标机的 $2
 scpt()
 {
-		for i in `seq 5`
-				do 
-						scp -q -r $SSH_OPT $1 root@$TARGET_IP:$2 && return 0
-								sleep 1
-								done 
-								scp -vvv $SSH_OPT $1 root@$TARGET_IP:$2
-								return $?
+    local target_ip=$1
+    shift
+    local args=""
+
+    while [ $# -ge 2 ]
+    do
+        args="$args $1"
+        shift
+    done 
+    scp -r $SSH_OPT $args root@$target_ip:"$1"
+    return $?
 }
 
 #将远程的文件 $1 拷贝到本地的 $2
 scpf()
 {
-		for i in `seq 5`
-				do 
-						scp -q -r $SSH_OPT root@$TARGET_IP:$1 $2 && return 0
-								sleep 1
-								done 
-								scp -vvv -r $SSH_OPT root@$TARGET_IP:$1 $2
-								return $?
+    local target_ip=$1
+    shift
+    local scpt_ret=0
+    while [ $# -ge 2 ]
+    do
+        eval scp -r $SSH_OPT root@$target_ip:\"$1\" \"\$$#\" 
+        [ $? -ne 0 ] && scpt_ret=$(( scpt_ret + 1 ))
+        shift
+    done
+    return $scpt_ret
 }

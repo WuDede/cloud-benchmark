@@ -89,7 +89,7 @@ test_sysbench()
 
 		for fileop in seqwr seqrd seqrewr rndwr rndrd rndrewr
 		do
-			./test_sysbench_fileio $fileop 2>&1 | tee -a $logfile
+			test_sysbench_fileio $fileop 2>&1 | tee -a $logfile
 		done
 
 		echo -n "timeout=30 threads=$NR_CPU " 2>&1 | tee -a $logfile
