@@ -149,15 +149,19 @@ test_qperf()
 	echo "myip=$myip reip=$reip vm1=$vm1 vm2=$vm2" | tee -a $logfile
 	[ -z "$myip" -o -z "$vm1" -o -z "$vm2" -o -z "$reip" ] && return 1
 	#mark that we are ok, if file ${RUN_FLAG}.qperf exist, means $reip ready
+    msg_warn "[ssh $SSH_OPT root@$reip touch ${RUN_FLAG}.qperf]"
 	ssh $SSH_OPT root@$reip touch ${RUN_FLAG}.qperf
 	#start server
+    msg_warn "[start qperf server]"
 	qperf 2>&1 > ${logfile}.qperf-server &
 	#wait the other vm ready
+    msg_warn "wait the other vm ready"
 	while [ -f ${RUN_FLAG} -a -f ${RUN_FLAG}.qperf ]
 	do
 		sleep 3
 	done
 	# vm2 wait vm1 test ok
+    msg_warn "vm2 wait vm1 test ok"
 	if [ "$myip" = "$vm2" ]; then 
 		#vm1 test ok then create file ${RUN_FLAG}.qperf.step1
 		while [ ! -f ${RUN_FLAG}.qperf.step1 ] && [ -f ${RUN_FLAG} ]
@@ -169,19 +173,25 @@ test_qperf()
 	for i in $(seq $nr_iter)
 	do 
 		[ -f ${RUN_FLAG} ] || break
+        msg_warn "do test [qperf $reip -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw]"
 		qperf $reip -t 10 -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw udp_bw 2>&1 | tee -a $logfile
 	done 
 	#vm1 wait vm2 test ok
 	if [ "$myip" = "$vm1" ]; then 
 		rm -rf ${RUN_FLAG}.qperf.step1
 		touch ${RUN_FLAG}.qperf.step1
+        msg_warn "touch ${RUN_FLAG}.qperf.step1"
+        msg_warn "ssh $SSH_OPT root@$reip rm -rf ${RUN_FLAG}.qperf.step1; touch ${RUN_FLAG}.qperf.step1"
 		ssh $SSH_OPT root@$reip "rm -rf ${RUN_FLAG}.qperf.step1; touch ${RUN_FLAG}.qperf.step1"
 	else 
 		rm -rf ${RUN_FLAG}.qperf.step2
 		touch ${RUN_FLAG}.qperf.step2
+        msg_warn "touch ${RUN_FLAG}.qperf.step2"
+        msg_warn "ssh $SSH_OPT root@$reip rm -rf ${RUN_FLAG}.qperf.step2; touch ${RUN_FLAG}.qperf.step2"
 		ssh $SSH_OPT root@$reip "rm -rf ${RUN_FLAG}.qperf.step2; touch ${RUN_FLAG}.qperf.step2"
 	fi 
 	#wait all test ok
+    msg_warn "wait all test ok"
 	while [ -f ${RUN_FLAG} ]
 	do
 		if [ -f ${RUN_FLAG}.qperf.step1 -a -f ${RUN_FLAG}.qperf.step2 ]; then 
