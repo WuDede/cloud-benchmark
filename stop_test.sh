@@ -28,12 +28,19 @@ main()
     local tmpdir=$(grep -w TMP_DIR $1/env | awk -F = '{print $2}')
     local loglist=""
     local logdir="$1/log/result/$(date +%Y-%m-%d-%H-%M-%S)"
+    local kpid=""
     for xip in $xiplist
     do
         msg_show "now $xip"
         if [ $stop_flag = true ]; then 
             msg_warn "now rm -rf the file $tmpdir/perf.run.flag in $xip to stop the test"
             sshx $xip "test -f $tmpdir/perf.run.flag && rm -rf $tmpdir/perf.run.flag"
+            kpid=$(sshx $xip "ps axfww | grep dist/test.sh | grep -vw grep" | awk '{print $1}')
+            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
+            kpid=$(sshx $xip "ps axfww | grep -w qperf | grep -vw grep" | awk '{print $1}')
+            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
+            kpid=$(sshx $xip "ps axfww | grep -w perf.run.flag | grep -vw grep" | awk '{print $1}')
+            [ -n "$kpid" ] && sshx $xip kill -9 $kpid
         fi
         if [ $glog_flag = true ]; then 
             msg_warn "now get logs from $xip:$tmpdir/result.*.log"

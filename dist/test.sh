@@ -212,21 +212,11 @@ do_test()
 	test_y_cruncher $NR_Y_CRUNCHER
 	test_sysbench $NR_SYSBENCH
 	
-	test_qperf $NR_QPERF
+	#test_qperf $NR_QPERF
 }
 
 main()
 {
-    #clean test env
-    #local kpid=$(ps axfww | grep "dist/test.sh" | grep -vw grep)
-    #[ -n "$kpid" ] && kill -9 $kpid
-    #kpid=$(ps axfww | grep -w qperf | grep -vw grep)
-    #[ -n "$kpid" ] && kill -9 $kpid
-    #kpid=$(ps axfww | grep -w "perf.run.flag" | grep -vw grep)
-    #[ -n "$kpid" ] && kill -9 $kpid
-    #kpid=$(ps axfww | grep -w "perf-tmp" | grep -vw grep)
-    #[ -n "$kpid" ] && kill -9 $kpid
-
     #try compile tools
 	if [ ! -f $TDIR/dist/compile.done ]; then 
 		cd $TDIR/dist
