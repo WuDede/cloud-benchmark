@@ -120,15 +120,16 @@ splite_file()
     local nr_end=$(grep "$2" "$3" | wc -l)
     [ $nr_start -ne $nr_end ] && { msg_err "file not ok or strings not correct"; return 1; }
 
-    grep -nr "$1" "$3" | awk -F '{print $1}' > "$4/lineno.start"
-    grep -nr "$2" "$3" | awk -F '{print $1}' > "$4/lineno.end"
+    grep -nr "$1" "$3" | awk -F : '{print $1}' > "$4/lineno.start"
+    grep -nr "$2" "$3" | awk -F : '{print $1}' > "$4/lineno.end"
 
     local ns=1
     local ne=1
     for i in $(seq $nr_start)
     do 
-        ns=$(sed -n $i p "$4/lineno.start")
-        ne=$(sed -n $i p "$4/lineno.end")
+        ns=$(sed -n "$i p" "$4/lineno.start")
+        ne=$(sed -n "$i p" "$4/lineno.end")
+        [ $ns -ge $ne ] && { msg_err "splite_file $3 ns=$ns ne=$ne"; return 1; }
         sed -n "$ns,$ne p" "$3" > "$4/$i" 
     done 
     return 0

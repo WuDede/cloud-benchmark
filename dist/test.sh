@@ -24,6 +24,7 @@ test_unixbench()
 	do 
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
+        msg_warn "./Run -q -c $NR_CPU -i 1 system"
 		./Run -q -c $NR_CPU -i 1 system 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
@@ -43,7 +44,9 @@ test_y_cruncher()
 	cd $TDIR/dist/y-cruncher_v0.7.5.9481-static
 
     local pi_bit="64M"
-    if [ $NR_CPU -le 4 ]; then 
+    if [ $NR_CPU -eq 1 ]; then 
+        pi_bit=64M
+    elif [ $NR_CPU -le 4 ]; then 
         pi_bit=128M
     elif [ $NR_CPU -gt 4 -a $NR_CPU -le 16 ]; then
         pi_bit=512M
@@ -57,6 +60,7 @@ test_y_cruncher()
 	do 
 		[ -f $RUN_FLAG ] || return
 		ts=$(awk '{print $1}' /proc/uptime)
+        msg_warn "./y-cruncher bench $pi_bit"
 		./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
@@ -70,6 +74,7 @@ test_sysbench_fileio()
 	local timeout=30
 	local blksize=4096
 	local rwratio=1
+    msg_warn "./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run"
 	echo -n "sysbench timeout=$timeout blksize=$blksize rwratio=$rwratio testmode=$1 "
 	./sysbench --time=$timeout fileio --file-block-size=$blksize --file-test-mode=$1 --file-rw-ratio=$rwratio run 2>&1 | grep "read, MiB\|written, MiB" | tr '\n' ' ' | sed "s|[[:blank:]]\+| |g"
 	echo ""
@@ -81,6 +86,7 @@ test_sysbench_memory()
 	local blksize=$1
 	local oper=$2
 	local mode=$3
+    msg_warn "./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run"
 	echo -n "sysbench timeout=$timeout blksize=$blksize oper=$oper mode=$mode "
 	./sysbench --time=$timeout --threads=$NR_CPU --memory-block-size=$blksize memory --memory-total-size=4096G --memory-oper=$oper --memory-access-mode=$mode run 2>&1 | grep "MiB transferred"
 }
@@ -104,6 +110,7 @@ test_sysbench()
 			test_sysbench_fileio $fileop 2>&1 | tee -a $logfile
 		done
 
+        msg_warn "./sysbench --time=30 --threads=$NR_CPU cpu run"
 		echo -n "timeout=30 threads=$NR_CPU " 2>&1 | tee -a $logfile
 		./sysbench --time=30 --threads=$NR_CPU cpu run 2>&1 | grep "events per second:" 2>&1 | tee -a $logfile
 
@@ -118,6 +125,7 @@ test_sysbench()
 
 		for trd_times in 1 2 4 8 16 32 64 128 256
 		do 
+            msg_warn "./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run"
 			echo -n "timeout=30 threads=$(( NR_CPU * trd_times )) " 2>&1 | tee -a $logfile
 			./sysbench --time=30 --threads=$(( NR_CPU * trd_times )) threads run 2>&1 | grep "total number of events:" 2>&1 | tee -a $logfile
 		done 
