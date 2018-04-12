@@ -55,7 +55,6 @@ main()
             xip=$(sed -n "$vm_seek p" $1/real-list)
             vm_seek=$(( vm_seek + 1 ))
             [ -f $tmpdir/run-start-flag.$xip ] || break
-            sleep 1
         done
         jump_skip=$(( jump_skip + 1 ))
         jump_skip=$(( jump_skip % jump_step ))
