@@ -47,9 +47,10 @@ parse_unixbench()
     for i in $(seq $nr_rcd)
     do
         echo -n "$i " | tee -a "$2"
+        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
         grep -w "samples" "$tmpdir/$i" | awk '{print $(NF-5)}' | tr '\n' ' ' | tee -a "$2"
         grep -w "System Benchmarks Index Score" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
+        echo "" | tee -a "$2"
     done
     rm -rf $tmpdir
 }
@@ -69,11 +70,12 @@ parse_y_cruncher()
     for i in $(seq $nr_rcd)
     do
         echo -n "$i " | tee -a "$2"
+        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Total Computation Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Start-to-End Wall Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU Utilization:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Multi-core Efficiency:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
+        echo "" | tee -a "$2"
     done
     rm -rf $tmpdir
 }
@@ -90,11 +92,12 @@ parse_sysbench()
     for i in $(seq $nr_rcd)
     do
         echo -n "$i " | tee -a "$2"
+        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
         grep -w "FILEIO" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
         grep -w "MEMORY" "$tmpdir/$i" | sed "s|.*(\([0-9.]\+\)[[:blank:]]\+MiB/sec.*)|\1|g" | tr '\n' ' ' | tee -a "$2"
         grep -w "THREADS" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
+        echo "" | tee -a "$2"
     done
     rm -rf $tmpdir
 }
@@ -111,9 +114,9 @@ parse_qperf()
     local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
     for i in $(seq $nr_rcd)
     do
-        timeinfo=$(grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}')
-        sed -i ":label;N;s|:.*\n| |;b label" "$tmpdir/$i"
         echo -n "$i " | tee -a "$2"
+        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
+        sed -i ":label;N;s|:.*\n| |;b label" "$tmpdir/$i"
         for j in sctp_lat sctp_bw tcp_lat tcp_bw udp_lat
         do
             if [ $(grep -w $j "$tmpdir/${i}" | wc -l) -ne $nr_column ]; then
@@ -139,7 +142,7 @@ parse_qperf()
                 }' | tr '\n' ' ' | tee -a "$2"
             fi
         done
-        echo $timeinfo | tee -a "$2"
+        echo "" | tee -a "$2"
     done
     echo $tmpdir
     #rm -rf $tmpdir
