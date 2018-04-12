@@ -29,7 +29,7 @@ main()
     local nr_run=0
     #跳着挑选虚拟机执行测试
     local jump_step=2
-    local jump_flag=0
+    local jump_skip=0
     local vm_seek=1
     local xip=
 
@@ -39,34 +39,29 @@ main()
     #主循环
     while true
     do
-        #轮询一次
         for vip in $vmlist
         do
-            [ -f $tmpdir/run-start-flag.$vip -a ! -f $tmpdir/run-start-flag.${vip}.cnt ] && { touch $tmpdir/run-start-flag.${vip}.cnt; nr_run=$(( nr_run + 1 )); }
-            [ -f $tmpdir/run-end-flag.$vip ] && { rm -rf $tmpdir/run-start-flag.$vip $tmpdir/run-end-flag.$vip $tmpdir/run-start-flag.${vip}.cnt; nr_run=$(( nr_run - 1 )); }
+            [ -f $tmpdir/run-end-flag.$vip ] && { rm -rf $tmpdir/run-start-flag.$vip $tmpdir/run-end-flag.$vip $tmpdir/run-start-flag.${vip}.cnt; }
         done
-        [ $nr_set -eq $nr_run ] && { sleep 5; continue; }
-        [ $nr_set -lt $nr_run ] && { msg_err "nr_set=$nr_set nr_run=$nr_run, please check"; return 1; }
-        #把少的几个测试拉起来
-        for i in $(seq $(( nr_set - nr_run )))
+        nr_s=$(ls $tmpdir | grep "run-start-flag" | wc -l)
+        nr_e=$(ls $tmpdir | grep "run-end-flag" | wc -l)
+        nr_run=$(( nr_s - nr_e ))
+        [ $nr_set -le $nr_run ] && { sleep 5; continue; }
+        while true
         do
-            #挑选一个么有跑测试的VM
-            while true
-            do
-                [ $vm_seek -gt $nr_vm ] && vm_seek=1
-                xip=$(sed -n "$vm_seek p" $1/real-list)
-                vm_seek=$(( vm_seek + 1 ))
-                [ -f $tmpdir/run-start-flag.$xip ] && continue
-                jump_flag=$(( jump_flag + 1 ))
-                #跳过jump_step个没有跑测试的VM之后，确定本次要跑的xip
-                [ $(( jump_flag % jump_step )) -eq 0 ] && break
-            done
-            #错开下位置，避免老是固定的几个VM跑测试
-            jump_flag=$(( jump_flag + 1 ))
-            test_count=$(( test_count + 1 ))
-            msg_warn "[$test_count] xip=$xip now setup the test flag"
-            ssh $SSH_OPT root@$xip "touch $tmpdir/do_test.ring.flag"
+            [ $vm_seek -gt $nr_vm ] && vm_seek=1
+            xip=$(sed -n "$vm_seek p" $1/real-list)
+            vm_seek=$(( vm_seek + 1 ))
+            [ -f $tmpdir/run-start-flag.$xip ] || break
+            sleep 1
         done
+        jump_skip=$(( jump_skip + 1 ))
+        jump_skip=$(( jump_skip % jump_step ))
+        vm_seek=$(( vm_seek + jump_skip ))
+        #错开下位置，避免老是固定的几个VM跑测试
+        test_count=$(( test_count + 1 ))
+        msg_warn "[$test_count] xip=$xip now setup the test flag"
+        ssh $SSH_OPT root@$xip "touch $tmpdir/do_test.ring.flag"
         sleep 5
     done
 }

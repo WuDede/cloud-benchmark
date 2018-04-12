@@ -98,3 +98,49 @@ parse_sysbench()
     done
     rm -rf $tmpdir
 }
+
+parse_qperf()
+{
+    local tmpdir=$(mktemp -d)
+    local nr_rcd=0
+    local localfile=$tmpdir/$(basename $1)
+    local nr_column=17
+    cp -avf $1 $localfile
+
+    splite_file "START_EOS_PERF_TEST" "END_EOS_PERF_TEST" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
+    for i in $(seq $nr_rcd)
+    do
+        timeinfo=$(grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}')
+        sed -i ":label;N;s|:.*\n| |;b label" "$tmpdir/$i"
+        echo -n "$i " | tee -a "$2"
+        for j in sctp_lat sctp_bw tcp_lat tcp_bw udp_lat
+        do
+            if [ $(grep -w $j "$tmpdir/${i}" | wc -l) -ne $nr_column ]; then
+                msg_err "$tmpdir/${i} for $j not ok"
+                for k in $(seq $nr_column)
+                do
+                    echo -n "no_val " | tee -a "$2"
+                done
+            else
+                grep -w $j "$tmpdir/${i}" | awk '{
+                if (($NF == "ms") || ($NF == "GB/sec"))
+                    {
+                        print $(NF-1)*1000
+                    }
+                else if (($NF == "ns") || ($NF == "KB/sec"))
+                    {
+                        print $(NF-1)/1000
+                    }
+                else
+                    {
+                        print $(NF-1)
+                    }
+                }' | tr '\n' ' ' | tee -a "$2"
+            fi
+        done
+        echo $timeinfo | tee -a "$2"
+    done
+    echo $tmpdir
+    #rm -rf $tmpdir
+}

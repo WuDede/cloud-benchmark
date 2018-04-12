@@ -189,7 +189,7 @@ test_qperf()
 
         te=$(awk '{print $1}' /proc/uptime)
         tc=$(echo $ts $te | awk '{print $2 - $1}')
-        echo  TIME_COST test qperf at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
+        echo TIME_COST test qperf at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
         echo "END_EOS_PERF_TEST qperf $i" | tee -a $logfile
     done
 }

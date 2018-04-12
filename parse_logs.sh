@@ -17,12 +17,13 @@ parse_one()
     local nrtmp=0
     local funcname=
 
-    for item in unixbench y-cruncher sysbench
+    for item in unixbench y-cruncher sysbench qperf
     do
         funcname=$(echo parse_${item} | tr '-' '_')
         nrtmp=$(ls "$1" | grep ${item}.log | wc -l)
         if [ $nrtmp -ne 1 ]; then
-            msg_err "$item log file not ok, nrtmp=$nrtmp"
+            msg_err "$item log file in $1 not ok, nrtmp=$nrtmp"
+            ls -al $1
             continue
         fi
 
@@ -46,6 +47,7 @@ main()
     do
         parse_one "$1/$xone" "$2" || return 1
     done
+    sed -i "s|[[:blank:]]\+$||g" "$2"
     sed -i "s|[[:blank:]]\+|\t|g" "$2"
     return 0
 }
