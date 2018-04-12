@@ -32,7 +32,7 @@ test_unixbench()
 		./Run -q -c $NR_CPU -i 1 system 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo COST unixbench test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds >> $logfile
+		echo TIME_COST unixbench test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
         echo "END_EOS_PERF_TEST UnixBench $i" | tee -a $logfile
 		sleep 3
 	done
@@ -70,7 +70,7 @@ test_y_cruncher()
 		./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo  COST test y-cruncher at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds >> $logfile
+		echo  TIME_COST test y-cruncher at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
         echo "END_EOS_PERF_TEST y-cruncher $i" | tee -a $logfile
 		sleep 3
 	done
@@ -138,7 +138,7 @@ test_sysbench()
 
 		te=$(awk '{print $1}' /proc/uptime)
 		tc=$(echo $ts $te | awk '{print $2 - $1}')
-		echo  COST test sysbench at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds | tee -a $logfile
+		echo  TIME_COST test sysbench at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
         echo "END_EOS_PERF_TEST sysbench $i" | tee -a $logfile
 		sleep 3
 	done
@@ -188,7 +188,7 @@ test_qperf()
 
 	te=$(awk '{print $1}' /proc/uptime)
 	tc=$(echo $ts $te | awk '{print $2 - $1}')
-	echo  COST test qperf at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
+	echo  TIME_COST test qperf at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
 }
 
 do_test()
