@@ -155,7 +155,7 @@ setup_tmux_run()
     $TMUX select-window -t $sel_wind
     $TMUX select-pane -t $sel_pane
     $TMUX pipe-pane -o "cat >> $WORK_DIR/log/tmux/runner_manager.log"
-    $TMUX send-keys "sh $BASE_DIR/manager.sh $WORK_DIR $1" Enter
+    $TMUX send-keys "cd $BASE_DIR; ./manager.sh $WORK_DIR $1" Enter
 
     #将tmux放到前台
     $TMUX attach-session -t "$SESSION_ID"

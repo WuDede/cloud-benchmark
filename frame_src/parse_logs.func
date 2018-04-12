@@ -48,7 +48,7 @@ parse_unixbench()
     do
         echo -n "$i " | tee -a "$2"
         grep -w "samples" "$tmpdir/$i" | awk '{print $(NF-5)}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "unixbench" "$tmpdir/$i" | awk '{print $(NF-1)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "System Benchmarks Index Score" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
         grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-1) " " $(NF-3)}' | tee -a "$2"
     done
     rm -rf $tmpdir

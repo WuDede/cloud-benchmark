@@ -194,12 +194,14 @@ test_qperf()
 do_test()
 {
     #等待测试的标志文件，该文件存在，则表示测试可以进行，否则等待
+    echo "=======[waiting $TDIR/do_test.ring.flag]======="
     while [ -f $RUN_FLAG ]
     do
         [ -f $TDIR/do_test.ring.flag ] && break
         sleep 5
     done
     ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
+    echo "got $TDIR/do_test.ring.flag, let's go"
 
 	test_unixbench $NR_UNIXBENCH
 	test_y_cruncher $NR_Y_CRUNCHER

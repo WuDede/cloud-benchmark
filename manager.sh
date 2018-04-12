@@ -8,7 +8,7 @@ main()
 {
     [ -d $1 ] || return 1
 
-    local vmlist=$(grep -v "^[[:blank:]]*#" $1/vm-list)
+    local vmlist=$(grep -v "^[[:blank:]]*#" $1/vm-list | tr '\n' ' ')
     local tmpdir=$(grep "^TMP_DIR=" $1/env | awk -F = '{print $2}')
     mkdir -p $tmpdir
     #多少个待测试的VM
@@ -32,14 +32,17 @@ main()
     local vm_seek=1
     local xip=
 
+    msg_show "vmlist=$vmlist"
+    msg_show "tmpdir=$tmpdir"
+
     #主循环
     while true
     do
         #轮询一次
         for vip in $vmlist
         do
-            [ -f $tmpdir/run-start-flag.$vip ] && $(( nr_run + 1 ))
-            [ -f $tmpdir/run-end-flag.$vip ] && { rm -rf $tmpdir/run-start-flag.$vip $tmpdir/run-end-flag.$vip; $(( nr_run - 1 )); }
+            [ -f $tmpdir/run-start-flag.$vip -a ! -f $tmpdir/run-start-flag.${vip}.cnt ] && { touch $tmpdir/run-start-flag.${vip}.cnt; nr_run=$(( nr_run + 1 )); }
+            [ -f $tmpdir/run-end-flag.$vip ] && { rm -rf $tmpdir/run-start-flag.$vip $tmpdir/run-end-flag.$vip $tmpdir/run-start-flag.${vip}.cnt; nr_run=$(( nr_run - 1 )); }
         done
         [ $nr_set -eq $nr_run ] && { sleep 5; continue; }
         [ $nr_set -lt $nr_run ] && { msg_err "nr_set=$nr_set nr_run=$nr_run, please check"; return 1; }

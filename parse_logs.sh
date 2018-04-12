@@ -28,42 +28,9 @@ parse_one()
 
         tmpfile="$1"/$(ls "$1" | grep ${item}.log)
         eval $funcname $tmpfile $tmpdir/$item || continue
-        sed -i "s|^|$item $onename|g" $tmpdir/$item
+        sed -i "s|^|$item $onename |g" $tmpdir/$item
         cat $tmpdir/$item >> $2
     done
-    return 0
-
-    if [ $(ls "$1" | grep unixbench.log | wc -l) -ne 1 ]; then
-        msg_err "unixbench log file not ok"
-        return 1
-    else
-        tmpfile="$1"/$(ls "$1" | grep unixbench.log)
-        parse_unixbench $tmpfile "$tmpdir/unixbench" || return 1
-        sed -i "s|^|UnixBench $onename |g" "$tmpdir/unixbench"
-        cat "$tmpdir/unixbench" >> "$2"
-    fi
-
-    if [ $(ls "$1" | grep y-cruncher.log | wc -l) -ne 1 ]; then
-        msg_err "y-cruncher log file not ok"
-        return 1
-    else
-        tmpfile="$1"/$(ls "$1" | grep y-cruncher.log)
-        parse_y_cruncher $tmpfile "$tmpdir/y-cruncher" || return 1
-        sed -i "s|^|y-cruncher $onename |g" "$tmpdir/y-cruncher"
-        cat "$tmpdir/y-cruncher" >> "$2"
-    fi
-
-    if [ $(ls "$1" | grep sysbench.log | wc -l) -ne 1 ]; then
-        msg_err "sysbench log file not ok"
-        return 1
-    else
-        tmpfile="$1"/$(ls "$1" | grep y-cruncher.log)
-        parse_y_cruncher $tmpfile "$tmpdir/sysbench" || return 1
-        sed -i "s|^|sysbench $onename |g" "$tmpdir/sysbench"
-        cat "$tmpdir/sysbench" >> "$2"
-    fi
-
-    rm -rf $tmpdir
     return 0
 }
 
@@ -78,6 +45,7 @@ main()
     for xone in $one_list
     do
         parse_one "$1/$xone" "$2" || return 1
+        return 22
     done
     sed -i "s|[[:blank:]]\+|\t|g" "$2"
     return 0
