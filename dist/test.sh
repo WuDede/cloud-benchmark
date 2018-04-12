@@ -197,14 +197,14 @@ test_qperf()
 do_test()
 {
     #等待测试的标志文件，该文件存在，则表示测试可以进行，否则等待
-    echo "=======[waiting $TDIR/do_test.ring.flag]======="
-    while [ -f $RUN_FLAG ]
-    do
-        [ -f $TDIR/do_test.ring.flag ] && break
-        sleep 5
-    done
-    ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
-    echo "got $TDIR/do_test.ring.flag, let's go"
+    #echo "=======[waiting $TDIR/do_test.ring.flag]======="
+    #while [ -f $RUN_FLAG ]
+    #do
+    #    [ -f $TDIR/do_test.ring.flag ] && break
+    #    sleep 5
+    #done
+    #ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
+    #echo "got $TDIR/do_test.ring.flag, let's go"
 
     test_unixbench 1
     test_y_cruncher 1
@@ -213,8 +213,8 @@ do_test()
     test_qperf 1
 
     #测试完成，删除文件，同时设置管理机上的标志文件
-    rm -rf $TDIR/do_test.ring.flag
-    ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-end-flag.$MY_IP" || return 1
+    #rm -rf $TDIR/do_test.ring.flag
+    #ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-end-flag.$MY_IP" || return 1
     return 0
 }
 
