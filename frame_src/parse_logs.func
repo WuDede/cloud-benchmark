@@ -71,6 +71,7 @@ parse_y_cruncher()
     do
         echo -n "$i " | tee -a "$2"
         grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "\./y-cruncher bench" "$tmpdir/$i" | awk '{print $NF}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Total Computation Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Start-to-End Wall Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU Utilization:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"

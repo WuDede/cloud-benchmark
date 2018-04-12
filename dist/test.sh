@@ -44,17 +44,27 @@ test_y_cruncher()
     local tc=
     cd $TDIR/dist/y-cruncher_v0.7.5.9481-static
 
-    local pi_bit="64M"
+    local pi_bit=64M
     if [ $NR_CPU -eq 1 ]; then
         pi_bit=64M
-    elif [ $NR_CPU -le 4 ]; then
-        pi_bit=128M
-    elif [ $NR_CPU -gt 4 -a $NR_CPU -le 16 ]; then
+    elif [ $NR_CPU -gt 1 -a $NR_CPU -le 4 ]; then
+        pi_bit=256M
+    elif [ $NR_CPU -gt 4 -a $NR_CPU -le 8 ]; then
         pi_bit=512M
-    elif [ $NR_CPU -gt 16 -a $NR_CPU -le 32]; then
+    elif [ $NR_CPU -gt 8 -a $NR_CPU -le 12 ]; then
+        pi_bit=512M
+    elif [ $NR_CPU -gt 12 -a $NR_CPU -le 16 ]; then
+        pi_bit=512M
+    elif [ $NR_CPU -gt 16 -a $NR_CPU -le 20 ]; then
         pi_bit=1G
-    elif [ $NR_CPU -gt 32 ]; then
+    elif [ $NR_CPU -gt 20 -a $NR_CPU -le 24 ]; then
+        pi_bit=1G
+    elif [ $NR_CPU -gt 24 -a $NR_CPU -le 28 ]; then
         pi_bit=2G
+    elif [ $NR_CPU -gt 28 -a $NR_CPU -le 32 ]; then
+        pi_bit=2G
+    elif [ $NR_CPU -gt 32 ]; then
+        pi_bit=4G
     fi
 
     for i in $(seq $nr_iter)
@@ -62,7 +72,7 @@ test_y_cruncher()
         [ -f $RUN_FLAG ] || return
         ts=$(awk '{print $1}' /proc/uptime)
         echo "START_EOS_PERF_TEST y-cruncher $i" | tee -a $logfile
-        echo "./y-cruncher bench $pi_bit"
+        echo "./y-cruncher bench $pi_bit" 2>&1 | tee -a $logfile
         ./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
         te=$(awk '{print $1}' /proc/uptime)
         tc=$(echo $ts $te | awk '{print $2 - $1}')
