@@ -8,6 +8,7 @@ main()
 {
     [ -d $1 ] || return 1
 
+    local test_count=0
     local vmlist=$(grep -v "^[[:blank:]]*#" $1/vm-list | tr '\n' ' ')
     local tmpdir=$(grep "^TMP_DIR=" $1/env | awk -F = '{print $2}')
     mkdir -p $tmpdir
@@ -50,7 +51,7 @@ main()
         for i in $(seq $(( nr_set - nr_run )))
         do
             #挑选一个么有跑测试的VM
-            for j in $(seq $nr_vm)
+            while true
             do
                 [ $vm_seek -gt $nr_vm ] && vm_seek=1
                 xip=$(sed -n "$vm_seek p" $1/real-list)
@@ -60,7 +61,10 @@ main()
                 #跳过jump_step个没有跑测试的VM之后，确定本次要跑的xip
                 [ $(( jump_flag % jump_step )) -eq 0 ] && break
             done
-            msg_warn "xip=$xip now setup the test flag"
+            #错开下位置，避免老是固定的几个VM跑测试
+            jump_flag=$(( jump_flag + 1 ))
+            test_count=$(( test_count + 1 ))
+            msg_warn "[$test_count] xip=$xip now setup the test flag"
             ssh $SSH_OPT root@$xip "touch $tmpdir/do_test.ring.flag"
         done
         sleep 5

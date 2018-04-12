@@ -22,7 +22,7 @@ parse_one()
         funcname=$(echo parse_${item} | tr '-' '_')
         nrtmp=$(ls "$1" | grep ${item}.log | wc -l)
         if [ $nrtmp -ne 1 ]; then
-            msg_err "$item log file not ok"
+            msg_err "$item log file not ok, nrtmp=$nrtmp"
             continue
         fi
 
@@ -45,7 +45,6 @@ main()
     for xone in $one_list
     do
         parse_one "$1/$xone" "$2" || return 1
-        return 22
     done
     sed -i "s|[[:blank:]]\+|\t|g" "$2"
     return 0
