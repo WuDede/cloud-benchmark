@@ -24,7 +24,9 @@ main()
 
     #设置多少个VM一起跑测试
     local nr_set=$nr_vm
-    [ -n "$2" -a "$2" -ge 1 -a "$2" -lt $nr_vm ] && nr_set=$2
+    if [ -n "$2" ]; then
+        [ "$2" -ge 1 -a "$2" -lt $nr_vm ] && nr_set=$2
+    fi
     #正在跑测试的VM数
     local nr_run=0
     #跳着挑选虚拟机执行测试
@@ -47,7 +49,7 @@ main()
         nr_e=$(ls $tmpdir | grep "run-end-flag" | wc -l)
         nr_run=$(( nr_s - nr_e ))
         [ $nr_set -le $nr_run ] && { sleep 5; continue; }
-        while true
+        for i in $vmlist
         do
             [ $vm_seek -gt $nr_vm ] && vm_seek=1
             xip=$(sed -n "$vm_seek p" $1/real-list)
