@@ -7,6 +7,12 @@
 # $4 -- output dir
 splite_file()
 {
+    grep "$1" "$3" > /dev/null 2>&1 &&
+    grep "$2" "$3" > /dev/null 2>&1
+    if [ $? -ne 0 ]; then
+        msg_err "file has no expect strings"
+        return 1
+    fi
     #remove the head and tail
     local tmpnr=$(grep -n "$1" "$3" | head -n 1 | awk -F : '{print $1}')
     [ $tmpnr -gt 1 ] && sed -i "1,$((tmpnr-1)) d" "$3"
@@ -71,7 +77,12 @@ parse_y_cruncher()
     do
         echo -n "$i " | tee -a "$2"
         grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "\./y-cruncher bench" "$tmpdir/$i" | awk '{print $NF}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "\./y-cruncher bench" "$tmpdir/$i" > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            grep -w "\./y-cruncher bench" "$tmpdir/$i" | awk '{print $NF}' | tr '\n' ' ' | tee -a "$2"
+        else
+            grep -w "Decimal Digits:" "$tmpdir/$i" | awk '{print $NF}' | sed "s|,||g" | tr '\n' ' ' | tee -a "$2"
+        fi
         grep -w "Total Computation Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Start-to-End Wall Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU Utilization:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
