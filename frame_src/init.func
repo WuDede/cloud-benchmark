@@ -21,8 +21,6 @@ test_init()
     fi
 
     cp -v $BASE_DIR/frame_src/tmux.conf $WORK_DIR/tmux.conf || xexit 1
-    #修改tmux的日志记录路径
-    sed -i "s|WORK_DIR|$WORK_DIR|g" $WORK_DIR/tmux.conf || xexit 1
 
     local tfile_list=
     #判断是否有文件需要拷贝，有则将测试文件拷贝过去
@@ -124,14 +122,19 @@ setup_tmux_run()
     local cmd_sh=
 
     #启动测试脚本
+    local vmspec=
+    local ostype=
     for tmpip in $TARGET_IP_LIST
     do
 
+        vmspec=$(grep -w "$tmpip" $WORK_DIR/vm-list | awk '{print $(N-1)}')
+        ostype=$(grep -w "$tmpip" $WORK_DIR/vm-list | awk '{print $(N)}')
         sel_wind=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $1}'`
         sel_pane=`sed -n "$pane_num p" list/tmux.pane.list | awk '{print $2}'`
         msg_warn "sel_wind=$sel_wind sel_pane=$sel_pane"
         $TMUX select-window -t $sel_wind
         $TMUX select-pane -t $sel_pane
+        $TMUX rename-window "${vmspec}_${ostype}"
         $TMUX pipe-pane -o "cat >> $WORK_DIR/log/tmux/runner_${tmpip}.log"
         cmd_sh="$WORK_DIR/testdir/cmd-${sel_wind}-${sel_pane}.sh"
         if [ -n "$SSH_CROSS_PATH" ]; then
