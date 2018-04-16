@@ -1,7 +1,7 @@
 #!/bin/sh
 SSH_OPT="-o ServerAliveInterval=5 -o ServerAliveCountMax=2 -o StrictHostKeyChecking=no -o ConnectTimeout=5"
 
-for x in 209 171
+for x in 206 96
 do
     #phoronix-test-suite test need
     #ssh $SSH_OPT root@192.168.1.$x yum -y install php xdg-utils php-xml pcre expat-devel

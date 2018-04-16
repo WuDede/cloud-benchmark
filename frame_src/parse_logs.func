@@ -41,6 +41,14 @@ splite_file()
 
 # $1 -- log file
 # $2 -- result file
+parse_main()
+{
+    cat "$1" | tee -a "$2"
+    return 0
+}
+
+# $1 -- log file
+# $2 -- result file
 parse_unixbench()
 {
     local tmpdir=$(mktemp -d)

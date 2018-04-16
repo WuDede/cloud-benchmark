@@ -23,7 +23,7 @@ parse_one()
         spec=$(grep -w "$onename" "$1/../../../../vm-list" | awk '{print $(NF-1)}')
         ostype=$(grep -w "$onename" "$1/../../../../vm-list" | awk '{print $(NF)}')
     fi
-    for item in unixbench y-cruncher sysbench qperf
+    for item in main unixbench y-cruncher sysbench qperf
     do
         funcname=$(echo parse_${item} | tr '-' '_')
         nrtmp=$(ls "$1" | grep ${item}.log | wc -l)

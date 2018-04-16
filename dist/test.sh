@@ -4,7 +4,7 @@
 MANAGER_IP=192.168.1.60
 MY_IP=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
 TDIR=$1
-NR_ITER=100
+NR_ITER=20
 LOG_PREFIX=$$
 NR_CPU=$(cat /proc/cpuinfo | grep -i processor | wc -l)
 RUN_FLAG=$TDIR/perf.run.flag
@@ -234,7 +234,7 @@ main()
     for rlsfile in $(ls /etc | grep -i release)
     do
         echo "FILE ---------> $rlsfile" | tee -a $logfile
-        cat $rlsfile | tee -a $logfile
+        [-r "/etc/$rlsfile" ] && cat "/etc/$rlsfile" | tee -a $logfile
     done
     uname -a | tee -a $logfile
 
