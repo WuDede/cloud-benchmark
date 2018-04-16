@@ -156,6 +156,5 @@ parse_qperf()
         done
         echo "" | tee -a "$2"
     done
-    echo $tmpdir
-    #rm -rf $tmpdir
+    rm -rf $tmpdir
 }

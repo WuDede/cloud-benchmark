@@ -24,7 +24,7 @@ main()
     done
 
     [ -d "$1" -a -f "$1/vm-list" ] || return 2
-    local xiplist=$(grep -v "[[:blank:]]*#" $1/vm-list)
+    local xiplist=$(sed "s|#.*||g" $1/vm-list)
     local tmpdir=$(grep -w TMP_DIR $1/env | awk -F = '{print $2}')
     local loglist=""
     local logdir="$1/log/result/$(date +%Y-%m-%d-%H-%M-%S)"

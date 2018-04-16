@@ -4,7 +4,7 @@
 MANAGER_IP=192.168.1.60
 MY_IP=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
 TDIR=$1
-NR_ITER=1000
+NR_ITER=100
 LOG_PREFIX=$$
 NR_CPU=$(cat /proc/cpuinfo | grep -i processor | wc -l)
 RUN_FLAG=$TDIR/perf.run.flag
@@ -230,6 +230,14 @@ do_test()
 
 main()
 {
+    local logfile=$TDIR/result.${LOG_PREFIX}.main.log
+    for rlsfile in $(ls /etc | grep -i release)
+    do
+        echo "FILE ---------> $rlsfile" | tee -a $logfile
+        cat $rlsfile | tee -a $logfile
+    done
+    uname -a | tee -a $logfile
+
     #try compile tools
     if [ ! -f $TDIR/dist/compile.done ]; then
         cd $TDIR/dist
@@ -247,6 +255,8 @@ main()
         [ -f $RUN_FLAG ] || break
         do_test "$@" || return 1
     done
+    echo "TEST END, NOW SHUTDOWN THE MACHINE !!!!!!!!!!!!!"
+    shutdown -P 0
     return 0
 }
 

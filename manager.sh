@@ -9,7 +9,7 @@ main()
     [ -d $1 ] || return 1
 
     local test_count=0
-    local vmlist=$(grep -v "^[[:blank:]]*#" $1/vm-list | tr '\n' ' ')
+    local vmlist=$(sed "s|#.*||g" $1/vm-list | tr '\n' ' ')
     local tmpdir=$(grep "^TMP_DIR=" $1/env | awk -F = '{print $2}')
     mkdir -p $tmpdir
     #多少个待测试的VM

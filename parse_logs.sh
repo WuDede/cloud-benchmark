@@ -14,9 +14,15 @@ parse_one()
     local tmpdir=$(mktemp -d)
     local tmpfile=
     local onename=$(basename $1)
+    local spec=
+    local ostype=
     local nrtmp=0
     local funcname=
 
+    if [ -f "$1/../../../../vm-list" ]; then
+        spec=$(grep -w "$onename" "$1/../../../../vm-list" | awk '{print $(NF-1)}')
+        ostype=$(grep -w "$onename" "$1/../../../../vm-list" | awk '{print $(NF)}')
+    fi
     for item in unixbench y-cruncher sysbench qperf
     do
         funcname=$(echo parse_${item} | tr '-' '_')
@@ -29,7 +35,11 @@ parse_one()
 
         tmpfile="$1"/$(ls "$1" | grep ${item}.log)
         eval $funcname $tmpfile $tmpdir/$item || continue
-        sed -i "s|^|$item $onename |g" $tmpdir/$item
+        if [ -n "$spec" -a -n "$ostype" ]; then
+            sed -i "s|^|$item $onename $spec $ostype |g" $tmpdir/$item
+        else
+            sed -i "s|^|$item $onename |g" $tmpdir/$item
+        fi
         cat $tmpdir/$item >> $2
     done
     return 0
