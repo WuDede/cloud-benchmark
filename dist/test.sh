@@ -72,8 +72,8 @@ test_y_cruncher()
         [ -f $RUN_FLAG ] || return
         ts=$(awk '{print $1}' /proc/uptime)
         echo "START_EOS_PERF_TEST y-cruncher $i" | tee -a $logfile
-        echo "./y-cruncher bench $pi_bit" 2>&1 | tee -a $logfile
-        ./y-cruncher bench $pi_bit 2>&1 | tee -a $logfile
+        echo "./y-cruncher skip-warnings bench $pi_bit" 2>&1 | tee -a $logfile
+        ./y-cruncher skip-warnings bench $pi_bit 2>&1 | tee -a $logfile
         te=$(awk '{print $1}' /proc/uptime)
         tc=$(echo $ts $te | awk '{print $2 - $1}')
         echo  TIME_COST test y-cruncher at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
