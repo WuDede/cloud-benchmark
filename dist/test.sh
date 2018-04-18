@@ -1,5 +1,6 @@
 #!/bin/sh
 # $1 -- tmpdir
+# $2 -- host WORK_DIR
 
 MANAGER_IP=192.168.1.60
 MY_IP=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
@@ -255,6 +256,9 @@ main()
         [ -f $RUN_FLAG ] || break
         do_test "$@" || return 1
     done
+    echo "TEST COMPLETE, UPLOAD RESULTS"
+    ssh $SSH_OPT dede@$MANAGER_IP "mkdir -p $2/log/result/upload/$MY_IP"
+    scp $SSH_OPT $TDIR/result.* dede@$MANAGER_IP:$2/log/result/upload/$MY_IP
     echo "TEST END, NOW SHUTDOWN THE MACHINE !!!!!!!!!!!!!"
     shutdown -P 0
     return 0

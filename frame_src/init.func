@@ -2,7 +2,7 @@
 test_init()
 {
     eval $XDEBUG
-    mkdir -p "$WORK_DIR/log"
+    mkdir -p "$WORK_DIR/log/result"
     mkdir -p "$WORK_DIR/log/tmux"
     mkdir -p "$WORK_DIR/tmp"
     mkdir -p "$WORK_DIR/testdir"
@@ -140,13 +140,13 @@ setup_tmux_run()
         if [ -n "$SSH_CROSS_PATH" ]; then
             echo "#!/bin/sh" > "$cmd_sh"
             echo "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip tar -C $TMP_DIR -xf $TMP_DIR/$(basename $TEST_PKG) && " >> "$cmd_sh"
-            echo "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip $TMP_DIR/$(basename $TEST_SCRIPT)" >> "$cmd_sh"
+            echo "ssh $SSH_OPT root@$SSH_CROSS_PATH ssh $SSH_OPT root@$tmpip $TMP_DIR/$(basename $TEST_SCRIPT) $TMP_DIR $WORK_DIR" >> "$cmd_sh"
             chmod +x "$cmd_sh"
             $TMUX send-keys "sh $cmd_sh" Enter
         else
             echo "#!/bin/sh" > "$cmd_sh"
             echo "ssh $SSH_OPT root@$tmpip tar -C $TMP_DIR -xf $TMP_DIR/$(basename $TEST_PKG)" >> "$cmd_sh"
-            echo "ssh $SSH_OPT root@$tmpip $TMP_DIR/dist/$(basename $TEST_SCRIPT) $TMP_DIR" >> "$cmd_sh"
+            echo "ssh $SSH_OPT root@$tmpip $TMP_DIR/dist/$(basename $TEST_SCRIPT) $TMP_DIR $WORK_DIR" >> "$cmd_sh"
             chmod +x "$cmd_sh"
             $TMUX send-keys "sh $cmd_sh" Enter
         fi
