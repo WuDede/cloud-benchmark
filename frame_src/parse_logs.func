@@ -137,7 +137,8 @@ parse_qperf()
         echo -n "$i " | tee -a "$2"
         grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
         sed -i ":label;N;s|:.*\n| |;b label" "$tmpdir/$i"
-        for j in sctp_lat sctp_bw tcp_lat tcp_bw udp_lat
+        #for j in sctp_lat sctp_bw tcp_lat tcp_bw udp_lat
+        for j in tcp_lat tcp_bw udp_lat
         do
             if [ $(grep -w $j "$tmpdir/${i}" | wc -l) -ne $nr_column ]; then
                 msg_err "$tmpdir/${i} for $j not ok"

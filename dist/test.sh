@@ -194,8 +194,10 @@ test_qperf()
         do
             [ -f ${RUN_FLAG} ] || break
             #udp_bw may cause connect fail, remove it
-            echo "do test [qperf $reip --listen_port $qport -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw]"
-            qperf $reip --listen_port $qport -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw 2>&1 | tee -a $logfile
+            #echo "do test [qperf $reip --listen_port $qport -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw]"
+            #qperf $reip --listen_port $qport -oo msg_size:1:64K:*2 -vu sctp_lat tcp_lat udp_lat sctp_bw tcp_bw 2>&1 | tee -a $logfile
+            echo "do test [qperf $reip --listen_port $qport -oo msg_size:1:64K:*2 -vu tcp_lat udp_lat tcp_bw]"
+            qperf $reip --listen_port $qport -oo msg_size:1:64K:*2 -vu tcp_lat udp_lat tcp_bw 2>&1 | tee -a $logfile
         done
 
         te=$(awk '{print $1}' /proc/uptime)
