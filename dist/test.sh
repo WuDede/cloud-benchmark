@@ -171,8 +171,8 @@ test_qperf()
         local qport=19765
         local server_pid=
         local myip=$(/sbin/ifconfig | grep 192.168 | sed "s|.*\(192.168\.[0-9]\+\.[0-9]\+\).*netmask.*|\1|g")
-        local vm1=$(grep -w "${myip}" $TDIR/dist/vm-list | grep -v "^[[:blank:]]*#" | awk '{print $1}')
-        local vm2=$(grep -w "${myip}" $TDIR/dist/vm-list | grep -v "^[[:blank:]]*#" | awk '{print $2}')
+        local vm1=$(sed "s|#.*||g" $TDIR/dist/vm-list | grep -w "${myip}" | tail -n 1 | awk '{print $1}')
+        local vm2=$(sed "s|#.*||g" $TDIR/dist/vm-list | grep -w "${myip}" | tail -n 1 | awk '{print $2}')
         local reip=$([ "$myip" = "$vm1" ] && echo $vm2 || echo $vm1)
         echo "myip=$myip reip=$reip vm1=$vm1 vm2=$vm2" | tee -a $logfile
         [ -z "$myip" -o -z "$vm1" -o -z "$vm2" -o -z "$reip" ] && return 1
@@ -217,9 +217,9 @@ do_test()
     #ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
     #echo "got $TDIR/do_test.ring.flag, let's go"
 
-    test_unixbench 1
-    test_y_cruncher 1
-    test_sysbench 1
+    #test_unixbench 1
+    #test_y_cruncher 1
+    #test_sysbench 1
 
     test_qperf 1
 
