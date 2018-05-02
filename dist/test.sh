@@ -207,6 +207,54 @@ test_qperf()
     done
 }
 
+test_stream()
+{
+    local nr_iter=1
+    [ -n "$1" ] && nr_iter=$1
+    local logfile=$TDIR/result.${LOG_PREFIX}.stream.log
+    local ts=
+    local te=
+    local tc=
+    cd $TDIR/dist/stream
+    for i in $(seq $nr_iter)
+    do
+        [ -f $RUN_FLAG ] || return
+        ts=$(awk '{print $1}' /proc/uptime)
+        echo "START_EOS_PERF_TEST stream $i" | tee -a $logfile
+        echo "export OMP_NUM_THREADS=1 && ./stream"
+        export OMP_NUM_THREADS=1 && ./stream 2>&1 | tee -a $logfile
+        te=$(awk '{print $1}' /proc/uptime)
+        tc=$(echo $ts $te | awk '{print $2 - $1}')
+        echo TIME_COST stream test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
+        echo "END_EOS_PERF_TEST stream $i" | tee -a $logfile
+        sleep 3
+    done
+}
+
+test_geekbench()
+{
+    local nr_iter=1
+    [ -n "$1" ] && nr_iter=$1
+    local logfile=$TDIR/result.${LOG_PREFIX}.geekbench.log
+    local ts=
+    local te=
+    local tc=
+    cd $TDIR/dist/Geekbench-3.4.1-Linux
+    for i in $(seq $nr_iter)
+    do
+        [ -f $RUN_FLAG ] || return
+        ts=$(awk '{print $1}' /proc/uptime)
+        echo "START_EOS_PERF_TEST stream $i" | tee -a $logfile
+        echo "./geekbench_x86_64 --no-upload --benchmark"
+        ./geekbench_x86_64 --no-upload --benchmark 2>&1 | tee -a $logfile
+        te=$(awk '{print $1}' /proc/uptime)
+        tc=$(echo $ts $te | awk '{print $2 - $1}')
+        echo TIME_COST stream test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
+        echo "END_EOS_PERF_TEST stream $i" | tee -a $logfile
+        sleep 3
+    done
+}
+
 do_test()
 {
     #等待测试的标志文件，该文件存在，则表示测试可以进行，否则等待
@@ -219,11 +267,12 @@ do_test()
     #ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
     #echo "got $TDIR/do_test.ring.flag, let's go"
 
-    #test_unixbench 1
-    #test_y_cruncher 1
-    #test_sysbench 1
-
-    test_qperf 1
+    test_unixbench 1
+    test_y_cruncher 1
+    test_sysbench 1
+    test_stream 1
+    test_geekbench 1
+    #test_qperf 1
 
     #测试完成，删除文件，同时设置管理机上的标志文件
     #rm -rf $TDIR/do_test.ring.flag

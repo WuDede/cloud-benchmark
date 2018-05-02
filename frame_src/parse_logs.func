@@ -167,3 +167,25 @@ parse_qperf()
     done
     rm -rf $tmpdir
 }
+
+# $1 -- log file
+# $2 -- result file
+parse_stream()
+{
+    local tmpdir=$(mktemp -d)
+    local nr_rcd=0
+    local localfile=$tmpdir/$(basename $1)
+    cp -avf $1 $localfile
+
+    splite_file "START_EOS_PERF_TEST" "END_EOS_PERF_TEST" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
+    for i in $(seq $nr_rcd)
+    do
+        echo -n "$i " | tee -a "$2"
+        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "Copy:\|Scale:\|Add:\|Triad:" "$tmpdir/$i" | sed "s|.*:||g" | tr '\n' ' ' | tee -a "$2"
+        echo "" | tee -a "$2"
+    done
+    rm -rf $tmpdir
+}
+
