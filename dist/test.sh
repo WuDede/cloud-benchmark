@@ -244,9 +244,43 @@ test_geekbench()
     do
         [ -f $RUN_FLAG ] || return
         ts=$(awk '{print $1}' /proc/uptime)
-        echo "START_EOS_PERF_TEST stream $i" | tee -a $logfile
+        echo "START_EOS_PERF_TEST geekbench $i" | tee -a $logfile
         echo "./geekbench_x86_64 --no-upload --benchmark"
         ./geekbench_x86_64 --no-upload --benchmark 2>&1 | tee -a $logfile
+        te=$(awk '{print $1}' /proc/uptime)
+        tc=$(echo $ts $te | awk '{print $2 - $1}')
+        echo TIME_COST stream test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
+        echo "END_EOS_PERF_TEST geekbench $i" | tee -a $logfile
+        sleep 3
+    done
+}
+
+test_pts()
+{
+    local nr_iter=1
+    [ -n "$1" ] && nr_iter=$1
+    local logfile=$TDIR/result.${LOG_PREFIX}.pts.log
+    local ts=
+    local te=
+    local tc=
+    cd $TDIR/dist/pts-support
+    local prefix_name="$(basename $TDIR)"
+    local options=""
+    local testitems=""
+    for i in $(seq $nr_iter)
+    do
+        [ -f $RUN_FLAG ] || return
+        ts=$(awk '{print $1}' /proc/uptime)
+        echo "START_EOS_PERF_TEST PTS $i" | tee -a $logfile
+
+        while read tests opts
+        do
+            [ -n "$opts" ] && [ "$opts" -ne "NA" ] && options="${opts};$options"
+            testitems="${testitems} $tests"
+        done < ./pts-test-list
+        echo TEST_RESULTS_NAME="${prefix_name}-${i}" TEST_RESULTS_IDENTIFIER="${prefix_name}-${i}-identifier" TEST_RESULTS_DESCRIPTION="${prefix_name}-${i}-description" PRESET_OPTIONS="$options" phoronix-test-suite internal-run $tests | tee -a $logfile
+        TEST_RESULTS_NAME="${prefix_name}-${i}" TEST_RESULTS_IDENTIFIER="${prefix_name}-${i}-identifier" TEST_RESULTS_DESCRIPTION="${prefix_name}-${i}-description" PRESET_OPTIONS="$options" phoronix-test-suite internal-run $tests 2>&1 | tee -a $logfile
+
         te=$(awk '{print $1}' /proc/uptime)
         tc=$(echo $ts $te | awk '{print $2 - $1}')
         echo TIME_COST stream test at $(date "+%Y/%m/%d-%H:%M:%S") cost $tc seconds 2>&1 | tee -a $logfile
@@ -267,11 +301,12 @@ do_test()
     #ssh $SSH_OPT dede@$MANAGER_IP "touch $TDIR/run-start-flag.$MY_IP" || return 1
     #echo "got $TDIR/do_test.ring.flag, let's go"
 
-    test_unixbench 1
-    test_y_cruncher 1
-    test_sysbench 1
-    test_stream 1
-    test_geekbench 1
+    #test_unixbench 1
+    #test_y_cruncher 1
+    #test_sysbench 1
+    #test_stream 1
+    #test_geekbench 1
+    test_pts 1
     #test_qperf 1
 
     #测试完成，删除文件，同时设置管理机上的标志文件
