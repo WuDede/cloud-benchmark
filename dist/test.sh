@@ -321,7 +321,7 @@ main()
     for rlsfile in $(ls /etc | grep -i release)
     do
         echo "FILE ---------> $rlsfile" | tee -a $logfile
-        [-r "/etc/$rlsfile" ] && cat "/etc/$rlsfile" | tee -a $logfile
+        [ -r "/etc/$rlsfile" ] && cat "/etc/$rlsfile" | tee -a $logfile
     done
     uname -a | tee -a $logfile
 

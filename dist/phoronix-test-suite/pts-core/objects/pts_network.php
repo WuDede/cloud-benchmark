@@ -41,7 +41,7 @@ class pts_network
 	}
 	public static function network_support_available()
 	{
-        return false
+        return false;
 		#return self::$disable_network_support == false;
 	}
 	public static function http_get_contents($url, $override_proxy = false, $override_proxy_port = false, $override_proxy_user = false, $override_proxy_pw = false, $http_timeout = -1)

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-main()
+other()
 {
 	#yum -y install make gcc vim perl automake libtool qperf
 	local xpwd=$(pwd)
@@ -31,7 +31,11 @@ main()
     cd ./Geekbench-3.4.1-Linux
     ./geekbench_x86_64 -r lhcici521@163.com qpp6g-kq4el-bo72w-mdngp-2kcvx-eu2uq-gjrkp-l5q7r-qi36y || return 1
     cd $xpwd
+}
 
+pts()
+{
+	local xpwd=$(pwd)
     tar xf phoronix-test-suite-7.8.0.tar.gz
     cd phoronix-test-suite
     sh ./install-sh || return 1
@@ -42,14 +46,18 @@ main()
         rpm -ivh ../dependencies-pkg/libevent-2.0.21-4.el7.x86_64.rpm ../dependencies-pkg/libevent-devel-2.0.21-4.el7.x86_64.rpm
     fi
     cp -avf ../pts-support/pts-download-cache/* /var/lib/phoronix-test-suite/download-cache
+    cd /var/cache && tar xf $xpwd/pts-support/cache.tar.gz
+    cd /var/lib/phoronix-test-suite/test-profile && tar xf $xpwd/pts-support/test-profiles-pts.tar.gz
+    cd /var/lib/phoronix-test-suite/installed-tests/pts && tar xf $xpwd/pts-support/installed-tests-pts.tar.gz
     while read tests opts
     do
         phoronix-test-suite install $tests || return 1
-    done ../pts-support/pts-test-list
+    done < ../pts-support/pts-test-list
 
     cd $xpwd
 	rm -rf $1
 	touch $1
 }
 
-main "$@"
+#other "$@"
+pts "$@"
