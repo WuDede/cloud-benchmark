@@ -364,11 +364,11 @@ class pts_network
 			{
 				// Failed to connect to PTS server
 
+                trigger_error('No Internet Connectivity', E_USER_WARNING);
+                self::$disable_internet_support = true;
 				// As a last resort, see if it can resolve IP to Google.com as a test for Internet connectivity...
 				// i.e. in case Phoronix server is down or some other issue, so just see if Google will resolve
 				// If google.com fails to resolve, it will simply return the original string
-                trigger_error('No Internet Connectivity', E_USER_WARNING);
-                self::$disable_internet_support = true;
 				/*if(gethostbyname('google.com') == 'google.com')
 				{
 					echo PHP_EOL;

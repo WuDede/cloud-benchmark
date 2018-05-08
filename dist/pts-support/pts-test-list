@@ -1,19 +1,16 @@
-pts/aio-stress  NA
-pts/apache  NA
-pts/blake2  NA
+pts/aio-stress
+pts/apache
+pts/blake2
 pts/cachebench  pts/cachebench.test=3
 pts/compilebench    pts/compilebench.run-test=3
 pts/cyclictest  pts/cyclictest.test-case=4
-pts/fio pts/fio.type=4;pts/fio.engine=0;pts/fio.buffered=0;pts/fio.direct=0;pts/fio.size=16;pts/fio.auto-disk-mount-points=1
+pts/fio pts/fio.type=4;pts/fio.engine=0;pts/fio.buffered=0;pts/fio.direct=0;pts/fio.size=0;pts/fio.auto-disk-mount-points=1
 pts/glibc-bench pts/glibc-bench.benchmark=6
 pts/go-benchmark    pts/go-benchmark.run-test=4
 pts/hackbench   pts/hackbench.count=6;pts/hackbench.type=2
-pts/interbench  pts/interbench.benchmakr=9;pts/interbench.load-type=9
-pts/iozone  pts/iozone.record-size=3;file-size=0;pts/iozone=2
+pts/iozone  pts/iozone.record-size=3;pts/iozone.file-size=0;pts/iozone.test=2
 pts/mcperf  pts/mcperf.method=7
-pts/nginx   NA
-pts/numpy   NA
-pts/openssl NA
+pts/openssl
 pts/redis   pts/redis.test=5
 pts/schbench    pts/schbench.msg-threads=6;pts/schbench.workers-per-msg-thread=7
 pts/stream  pts/stream.run-type=4

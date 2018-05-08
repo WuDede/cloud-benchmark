@@ -120,7 +120,7 @@ test_sysbench()
         echo "START_EOS_PERF_TEST sysbench $i" | tee -a $logfile
 
         echo "start do sysbench test" | tee -a $logfile
-        for fileop in seqwr seqrd seqrewr rndwr rndrd rndrw
+        for fileop in seqwr seqrd rndwr rndrd
         do
             test_sysbench_fileio $fileop | tee -a $logfile
         done
@@ -264,7 +264,8 @@ test_pts()
     local te=
     local tc=
     cd $TDIR/dist/pts-support
-    local prefix_name="$(basename $TDIR)"
+    local prefix_name="$(basename $TDIR | tr 'A-Z' 'a-z')"
+    local identify=""
     local options=""
     local testitems=""
     for i in $(seq $nr_iter)
@@ -273,13 +274,15 @@ test_pts()
         ts=$(awk '{print $1}' /proc/uptime)
         echo "START_EOS_PERF_TEST PTS $i" | tee -a $logfile
 
+        identify=$(date +%Y%m%d-%H%M%S)
         while read tests opts
         do
-            [ -n "$opts" ] && [ "$opts" -ne "NA" ] && options="${opts};$options"
+            options="${opts};$options"
             testitems="${testitems} $tests"
         done < ./pts-test-list
-        echo TEST_RESULTS_NAME="${prefix_name}-${i}" TEST_RESULTS_IDENTIFIER="${prefix_name}-${i}-identifier" TEST_RESULTS_DESCRIPTION="${prefix_name}-${i}-description" PRESET_OPTIONS="$options" phoronix-test-suite internal-run $tests | tee -a $logfile
-        TEST_RESULTS_NAME="${prefix_name}-${i}" TEST_RESULTS_IDENTIFIER="${prefix_name}-${i}-identifier" TEST_RESULTS_DESCRIPTION="${prefix_name}-${i}-description" PRESET_OPTIONS="$options" phoronix-test-suite internal-run $tests 2>&1 | tee -a $logfile
+        echo TEST_RESULTS_NAME="${prefix_name}-${i}" TEST_RESULTS_IDENTIFIER="${prefix_name}-${i}-identifier-${identify}" TEST_RESULTS_DESCRIPTION="${prefix_name}-${i}-description-${identify}" PRESET_OPTIONS=\""$options"\" phoronix-test-suite internal-run $testitems | tee -a $logfile
+        TEST_RESULTS_NAME="${prefix_name}-${i}" TEST_RESULTS_IDENTIFIER="${prefix_name}-${i}-identifier-${identify}" TEST_RESULTS_DESCRIPTION="${prefix_name}-${i}-description-${identify}" PRESET_OPTIONS="$options" phoronix-test-suite internal-run $testitems 2>&1 | tee -a $logfile
+        phoronix-test-suite result-file-to-csv "${prefix_name}-${i}" > $TDIR/result.${LOG_PREFIX}.pts.${identify}.csv
 
         te=$(awk '{print $1}' /proc/uptime)
         tc=$(echo $ts $te | awk '{print $2 - $1}')
@@ -340,6 +343,9 @@ main()
     for i in $(seq $NR_ITER)
     do
         [ -f $RUN_FLAG ] || break
+        echo "===================================================="
+        echo "                        $i "
+        echo "===================================================="
         do_test "$@" || return 1
     done
     echo "TEST COMPLETE, UPLOAD RESULTS"

@@ -99,12 +99,15 @@ scpf()
 {
     local target_ip=$1
     shift
+    local tmpdir=$(mktemp -d)
     local scpt_ret=0
     while [ $# -ge 2 ]
     do
-        eval scp -r $SSH_OPT root@$target_ip:\"$1\" \"\$$#\"
+        eval scp -r $SSH_OPT root@$target_ip:\"$1\" $tmpdir
         [ $? -ne 0 ] && scpt_ret=$(( scpt_ret + 1 ))
         shift
     done
+    mv $tmpdir/* "$1"
+    rm -rf $tmpdir
     return $scpt_ret
 }

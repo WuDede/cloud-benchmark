@@ -89,12 +89,14 @@ parse_y_cruncher()
         if [ $? -eq 0 ]; then
             grep -w "\./y-cruncher bench" "$tmpdir/$i" | awk '{print $NF}' | tr '\n' ' ' | tee -a "$2"
         else
-            grep -w "Decimal Digits:" "$tmpdir/$i" | awk '{print $NF}' | sed "s|,||g" | tr '\n' ' ' | tee -a "$2"
+            grep -w "Decimal Digits:" "$tmpdir/$i" | grep -v "Writing Decimal Digits:" | awk '{print $NF}' | sed "s|,||g" | tr '\n' ' ' | tee -a "$2"
         fi
         grep -w "Total Computation Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "Start-to-End Wall Time" "$tmpdir/$i" | awk '{print $4}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU Utilization:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
+        echo -n " 0 " | tee -a "$2"
         grep -w "Multi-core Efficiency:" "$tmpdir/$i" | awk '{print $3 " " $6}' | tr '\n' ' ' | tee -a "$2"
+        echo -n " 0 " | tee -a "$2"
         echo "" | tee -a "$2"
     done
     rm -rf $tmpdir
@@ -113,7 +115,7 @@ parse_sysbench()
     do
         echo -n "$i " | tee -a "$2"
         grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
-        grep -w "FILEIO" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "FILEIO" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF)}' | tr '\n' ' ' | awk '{print $2" "$3" "$6" "$7}' | tr '\n' ' ' | tee -a "$2"
         grep -w "CPU" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
         grep -w "MEMORY" "$tmpdir/$i" | sed "s|.*(\([0-9.]\+\)[[:blank:]]\+MiB/sec.*)|\1|g" | tr '\n' ' ' | tee -a "$2"
         grep -w "THREADS" "$tmpdir/$i" | awk '{print $(NF)}' | tr '\n' ' ' | tee -a "$2"
@@ -189,3 +191,23 @@ parse_stream()
     rm -rf $tmpdir
 }
 
+# $1 -- log file
+# $2 -- result file
+parse_geekbench()
+{
+    local tmpdir=$(mktemp -d)
+    local nr_rcd=0
+    local localfile=$tmpdir/$(basename $1)
+    cp -avf $1 $localfile
+
+    splite_file "START_EOS_PERF_TEST" "END_EOS_PERF_TEST" "$localfile" "$tmpdir" || return 1
+    local nr_rcd=$(grep "START_EOS_PERF_TEST" $localfile | wc -l)
+    for i in $(seq $nr_rcd)
+    do
+        echo -n "$i " | tee -a "$2"
+        grep -w "cost.*seconds" "$tmpdir/$i" | awk '{print $(NF-3) " " $(NF-1) " "}' | tr '\n' ' ' | tee -a "$2"
+        grep -w "Integer Score\|Floating Point Score\|Memory Score\|Geekbench Score" "$tmpdir/$i" | sed "s|[a-zA-Z]*||g" | tr '\n' ' ' | tee -a "$2"
+        echo "" | tee -a "$2"
+    done
+    rm -rf $tmpdir
+}

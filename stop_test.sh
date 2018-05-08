@@ -43,6 +43,7 @@ main()
             msg_warn "now get logs from $xip:$tmpdir/result.*.log"
             mkdir -p $logdir/$xip
             loglist=$(sshy $xip ls $tmpdir/result.* 2>/dev/null | tr '\n' ' ')
+            echo $loglist
             scpf $xip $loglist $logdir/$xip || return 1
         fi
         msg_warn "all logs save at $logdir"

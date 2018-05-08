@@ -36,10 +36,10 @@ other()
 pts()
 {
 	local xpwd=$(pwd)
-    tar xf phoronix-test-suite-7.8.0.tar.gz
+    rm -rf /var/lib/phoronix-test-suite /usr/share/phoronix-test-suite /var/cache/phoronix-test-suite
     cd phoronix-test-suite
     sh ./install-sh || return 1
-    mkdir -p /var/lib/phoronix-test-suite/download-cache
+    mkdir -p /var/lib/phoronix-test-suite/download-cache /var/lib/phoronix-test-suite/test-profiles /var/lib/phoronix-test-suite/installed-tests/pts
     rpm -qa | grep libevent && rpm -qa | grep libevent-devel
     if [ $? -ne 0 ]; then
         rpm -e libevent libevent-devel
@@ -47,12 +47,13 @@ pts()
     fi
     cp -avf ../pts-support/pts-download-cache/* /var/lib/phoronix-test-suite/download-cache
     cd /var/cache && tar xf $xpwd/pts-support/cache.tar.gz
-    cd /var/lib/phoronix-test-suite/test-profile && tar xf $xpwd/pts-support/test-profiles-pts.tar.gz
+    cd /var/lib/phoronix-test-suite/test-profiles && tar xf $xpwd/pts-support/test-profiles-pts.tar.gz
     cd /var/lib/phoronix-test-suite/installed-tests/pts && tar xf $xpwd/pts-support/installed-tests-pts.tar.gz
+    cd $xpwd
     while read tests opts
     do
         phoronix-test-suite install $tests || return 1
-    done < ../pts-support/pts-test-list
+    done < ./pts-support/pts-test-list
 
     cd $xpwd
 	rm -rf $1
